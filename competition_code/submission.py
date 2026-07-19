@@ -97,7 +97,7 @@ class RoarCompetitionSolution:
         steer_control = np.clip(steer_control, -1.0, 1.0)
 
         # Proportional controller to control the vehicle's speed towards 40 m/s
-        throttle_control = 0.05 * (20 - vehicle_velocity_norm)
+        throttle_control = 0.05 * (30 - vehicle_velocity_norm)
 
         control = {
             "throttle": np.clip(throttle_control, 0.0, 1.0),
