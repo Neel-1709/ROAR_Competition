@@ -13,6 +13,7 @@ import numpy as np
 import roar_py_interface
 from LateralController import LatController
 from ThrottleController import ThrottleController
+from StanelyController import StanleyController
 from WaypointLine import WaypointLine
 from SectionStats import SectionStats
 import atexit
@@ -132,6 +133,8 @@ class RoarCompetitionSolution:
         self.previous_brake = False
         self.s3_mult = 1
 
+        self.stanley_controller = StanleyController(k=0.05,wheel_base=2.5)
+
     async def initialize(self) -> None:
         # NOTE waypoints are changed through this line
         self.maneuverable_waypoints = (
@@ -139,6 +142,13 @@ class RoarCompetitionSolution:
                 np.load(f"{os.path.dirname(__file__)}\\waypoints\\waypointsPrimary.npz")
             )[35:]
         )
+        self.path_x = np.array([wp.location[0] for wp in self.maneuverable_waypoints])
+        self.path_y = np.array([wp.location[1] for wp in self.maneuverable_waypoints])
+        dx = np.roll(self.path_x, -1) - self.path_x
+        dy = np.roll(self.path_y, -1) - self.path_y
+        self.path_yaw = np.arctan2(dy, dx)
+
+
         self.section_stats = SectionStats(
             self.maneuverable_waypoints, self.location_sensor, self.velocity_sensor)
 
@@ -215,9 +225,26 @@ class RoarCompetitionSolution:
             waypoint_to_follow_location = snap_to_line_location
 
         # Pure pursuit controller to steer the vehicle
-        steer_control, steer_debug = self.lat_controller.run(
-            vehicle_location, vehicle_rotation, waypoint_to_follow_location, self.current_waypoint_idx
-        )
+
+        if self.current_section in [6,7]:
+            steer_control, nearest_idx = self.stanley_controller.run(
+                x=vehicle_location[0],
+                y=vehicle_location[1],
+                yaw=np.arctan2(vehicle_velocity[1],vehicle_velocity[0]),
+                v=vehicle_velocity_norm,
+                path_x=self.path_x,
+                path_y=self.path_y,
+                path_yaw=self.path_yaw,
+                current_waypoint_idx=self.current_waypoint_idx,
+            )
+
+        else:
+            steer_control, steer_debug = self.lat_controller.run(
+                vehicle_location,
+                vehicle_rotation,
+                waypoint_to_follow_location,
+                self.current_waypoint_idx,
+            )
 
         # Custom controller to control the vehicle's speed
         waypoints_for_throttle = (self.maneuverable_waypoints * 2)[
@@ -279,7 +306,12 @@ class RoarCompetitionSolution:
             else:
                 steerMultiplier = max(steerMultiplier, 1.5)
 
-        steer_value = np.clip(steer_control * steerMultiplier, -1, 1)
+        if self.current_section in [6,7]:
+            steer_value = np.clip(steer_control, -1, 1)
+        else:
+            steer_value = np.clip(steer_control * steerMultiplier, -1, 1)
+
+        
         # sec3
         if  820 < self.current_waypoint_idx < 837:
             steer_value = np.clip(steer_control * steerMultiplier, -0.007, 1)
@@ -290,6 +322,19 @@ class RoarCompetitionSolution:
               self.previous_brake = True
         if self.current_waypoint_idx in [2383, 2384, 2385]:
             self.previous_brake = False
+
+
+        # Temporary final-corner entry speed limit
+        FINAL_CORNER_BRAKE_START = 1800
+        FINAL_CORNER_END = 2100
+        FINAL_CORNER_TARGET_SPEED = 80.0  # km/h
+
+        if FINAL_CORNER_BRAKE_START <= self.current_waypoint_idx <= FINAL_CORNER_END:
+            speed_error = current_speed_kmh - FINAL_CORNER_TARGET_SPEED
+
+            if speed_error > 0:
+                throttle = 0.0
+                brake = np.clip(speed_error / 30.0, 0.2, 1.0)
 
         control = {
             "throttle": np.clip(throttle, 0, 1),
@@ -352,6 +397,7 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
 #                 )
 
         await self.vehicle.apply_action(control)
+
         return control
 
     def get_lookahead_value(self, speed):
