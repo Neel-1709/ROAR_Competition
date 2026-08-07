@@ -1,0 +1,34 @@
+[
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 11.531933167272543,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141450969048739,
+        "max_speed": 56.0683032989502,
+        "max_lateral_error": 11.399980977228738,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75920633857578
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415042410126652,
+        "max_speed": 55.95228080749512,
+        "max_lateral_error": 11.531923472840433,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 11.531933167272543,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842
+    }
+]

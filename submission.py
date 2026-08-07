@@ -17,6 +17,7 @@ from StanelyController import StanleyController
 from WaypointLine import WaypointLine
 from SectionStats import SectionStats
 import atexit
+import json
 
 # from scipy.interpolate import interp1d
 
@@ -135,6 +136,25 @@ class RoarCompetitionSolution:
 
         self.stanley_controller = StanleyController(k=0.05,wheel_base=2.5)
 
+
+        # RL Stats for observation normalization
+        self.max_yaw_rate = 0.0
+        self.max_heading_error = 0.0
+        self.max_speed = 0.0
+        self.max_lateral_error = 0.0
+        self.max_waypoint_x = 0.0
+        self.max_waypoint_y = 0.0
+        self.previous_yaw = None
+        self.stats = {
+            "max_yaw_rate": 0.0,
+            "max_heading_error": 0.0,
+            "max_speed": 0.0,
+            "max_lateral_error": 0.0,
+            "max_waypoint_x": 0.0,
+            "max_waypoint_y": 0.0,
+        }
+        self.saved_stats = False
+
     async def initialize(self) -> None:
         # NOTE waypoints are changed through this line
         self.maneuverable_waypoints = (
@@ -225,26 +245,12 @@ class RoarCompetitionSolution:
             waypoint_to_follow_location = snap_to_line_location
 
         # Pure pursuit controller to steer the vehicle
-
-        if self.current_section in [6,7]:
-            steer_control, nearest_idx = self.stanley_controller.run(
-                x=vehicle_location[0],
-                y=vehicle_location[1],
-                yaw=np.arctan2(vehicle_velocity[1],vehicle_velocity[0]),
-                v=vehicle_velocity_norm,
-                path_x=self.path_x,
-                path_y=self.path_y,
-                path_yaw=self.path_yaw,
-                current_waypoint_idx=self.current_waypoint_idx,
-            )
-
-        else:
-            steer_control, steer_debug = self.lat_controller.run(
-                vehicle_location,
-                vehicle_rotation,
-                waypoint_to_follow_location,
-                self.current_waypoint_idx,
-            )
+        steer_control, steer_debug = self.lat_controller.run(
+            vehicle_location,
+            vehicle_rotation,
+            waypoint_to_follow_location,
+            self.current_waypoint_idx,
+        )
 
         # Custom controller to control the vehicle's speed
         waypoints_for_throttle = (self.maneuverable_waypoints * 2)[
@@ -306,10 +312,7 @@ class RoarCompetitionSolution:
             else:
                 steerMultiplier = max(steerMultiplier, 1.5)
 
-        if self.current_section in [6,7]:
-            steer_value = np.clip(steer_control, -1, 1)
-        else:
-            steer_value = np.clip(steer_control * steerMultiplier, -1, 1)
+        steer_value = np.clip(steer_control * steerMultiplier, -1, 1)
 
         
         # sec3
@@ -324,17 +327,17 @@ class RoarCompetitionSolution:
             self.previous_brake = False
 
 
-        # Temporary final-corner entry speed limit
-        FINAL_CORNER_BRAKE_START = 1800
-        FINAL_CORNER_END = 2100
-        FINAL_CORNER_TARGET_SPEED = 80.0  # km/h
+        # # Temporary final-corner entry speed limit
+        # FINAL_CORNER_BRAKE_START = 1780
+        # FINAL_CORNER_END = 1800
+        # FINAL_CORNER_TARGET_SPEED = 190.0  # km/h
 
-        if FINAL_CORNER_BRAKE_START <= self.current_waypoint_idx <= FINAL_CORNER_END:
-            speed_error = current_speed_kmh - FINAL_CORNER_TARGET_SPEED
+        # if FINAL_CORNER_BRAKE_START <= self.current_waypoint_idx <= FINAL_CORNER_END:
+        #     speed_error = current_speed_kmh - FINAL_CORNER_TARGET_SPEED
 
-            if speed_error > 0:
-                throttle = 0.0
-                brake = np.clip(speed_error / 30.0, 0.2, 1.0)
+        #     if speed_error > 0:
+        #         throttle = 0.0
+        #         brake = np.clip(speed_error / 20.0, 0.2, 1.0)
 
         control = {
             "throttle": np.clip(throttle, 0, 1),
@@ -396,15 +399,93 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
 # Steer: {control['steer']:.10f} \n"
 #                 )
 
+        # RL observation data collection(for normalized values)
+
+        # Yaw Rate
+        vehicle_yaw = vehicle_rotation[2]
+
+        if self.previous_yaw is None:
+            yaw_rate = 0.0
+        else:
+            yaw_change = vehicle_yaw - self.previous_yaw
+            yaw_change = self.normalize_angle(yaw_change)
+            yaw_rate = yaw_change / 0.05
+
+        self.previous_yaw = vehicle_yaw
+
+        self.max_yaw_rate = max(self.max_yaw_rate, abs(yaw_rate))
+
+        # Heading Error
+        path_yaw = self.path_yaw[self.current_waypoint_idx]
+
+        heading_error = path_yaw - vehicle_yaw
+        heading_error = self.normalize_angle(heading_error)
+
+        self.max_heading_error = max(self.max_heading_error, abs(heading_error))
+
+        # Max Speed
+        self.max_speed = max(self.max_speed, current_speed_kmh)
+
+        # Lateral Error
+        current_wp = self.maneuverable_waypoints[self.current_waypoint_idx]
+        lateral_error = np.linalg.norm(vehicle_location[:2] - current_wp.location[:2])
+        self.max_lateral_error = max(self.max_lateral_error, lateral_error)
+
+        # Max x and y offsets of future waypoints
+        for i in range(1,41):
+            idx = (self.current_waypoint_idx + i * 5) % len(self.maneuverable_waypoints)
+
+            waypoint = self.maneuverable_waypoints[idx]
+            dx = waypoint.location[0] - vehicle_location[0]
+            dy = waypoint.location[1] - vehicle_location[1]
+
+            distance = np.sqrt(dx**2 + dy**2)
+            global_angle_to_wp = np.arctan2(dy, dx)
+            local_angle_to_wp = global_angle_to_wp - vehicle_yaw
+
+            normalized_relative_angle = self.normalize_angle(local_angle_to_wp)
+
+            x_offset = distance * np.cos(normalized_relative_angle)
+            y_offset = distance * np.sin(normalized_relative_angle)
+
+            self.max_waypoint_x = np.max([self.max_waypoint_x, abs(x_offset)])
+            self.max_waypoint_y = np.max([self.max_waypoint_y, abs(y_offset)])
+
+        self.stats['max_yaw_rate'] = np.max([self.stats['max_yaw_rate'], self.max_yaw_rate])
+        self.stats['max_heading_error'] = np.max([self.stats['max_heading_error'], self.max_heading_error])
+        self.stats['max_speed'] = np.max([self.stats['max_speed'], self.max_speed])
+        self.stats['max_lateral_error'] = np.max([self.stats['max_lateral_error'], self.max_lateral_error])
+        self.stats['max_waypoint_x'] = np.max([self.stats['max_waypoint_x'], self.max_waypoint_x])
+        self.stats['max_waypoint_y'] = np.max([self.stats['max_waypoint_y'], self.max_waypoint_y])
+
+        if self.current_waypoint_idx == len(self.maneuverable_waypoints) - 1 and not self.saved_stats:
+            # Updating stats JSON file
+            if os.path.exists("observation_stats.json"):
+                with open("observation_stats.json", "r") as f:
+                    data = json.load(f)
+                    data.append(self.stats)
+            else:
+                data = [self.stats]
+
+            with open("observation_stats.json", "w") as f:
+                json.dump(data, f, indent=4)
+            self.saved_stats = True
+
         await self.vehicle.apply_action(control)
 
         return control
+
+    def normalize_angle(self, angle):
+        # Formula for normalized angles: normalized_angle = (angle % 360 + 360) % 360 - 180
+        TAU = 2 * np.pi
+        return (angle % TAU + TAU) % TAU - np.pi
 
     def get_lookahead_value(self, speed):
         """
         Returns the number of waypoints to look ahead based on the speed the car is currently going
         """
         speed_to_lookahead_dict = {
+            80:7,
             90: 9,
             110: 11,
             130: 14,
