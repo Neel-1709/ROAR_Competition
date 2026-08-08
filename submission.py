@@ -162,11 +162,18 @@ class RoarCompetitionSolution:
                 np.load(f"{os.path.dirname(__file__)}\\waypoints\\waypointsPrimary.npz")
             )[35:]
         )
-        self.path_x = np.array([wp.location[0] for wp in self.maneuverable_waypoints])
-        self.path_y = np.array([wp.location[1] for wp in self.maneuverable_waypoints])
-        dx = np.roll(self.path_x, -1) - self.path_x
-        dy = np.roll(self.path_y, -1) - self.path_y
-        self.path_yaw = np.arctan2(dy, dx)
+        self.path_yaw = []
+
+        for i in range(len(self.maneuverable_waypoints)):
+            current_wp = self.maneuverable_waypoints[i]
+            next_wp = self.maneuverable_waypoints[(i + 1) % len(self.maneuverable_waypoints)]
+
+            dx = next_wp.location[0] - current_wp.location[0]
+            dy = next_wp.location[1] - current_wp.location[1]
+            yaw = np.arctan2(dy, dx)
+            self.path_yaw.append(yaw)
+
+        self.path_yaw = np.array(self.path_yaw)
 
 
         self.section_stats = SectionStats(
@@ -427,9 +434,13 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
         self.max_speed = max(self.max_speed, current_speed_kmh)
 
         # Lateral Error
-        current_wp = self.maneuverable_waypoints[self.current_waypoint_idx]
-        lateral_error = np.linalg.norm(vehicle_location[:2] - current_wp.location[:2])
-        self.max_lateral_error = max(self.max_lateral_error, lateral_error)
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        previous_wp = self.maneuverable_waypoints[self.current_waypoint_idx - 1].location
+        next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + 1) % len(self.maneuverable_waypoints)].location
+        path = next_wp - previous_wp
+
+        lateral_error = (path[1]*vehicle_location[0] - path[0]*vehicle_location[1] + next_wp[0]*previous_wp[1] - next_wp[1]*previous_wp[0]) / np.sqrt((path[0]**2 + path[1]**2))
+        self.max_lateral_error = max(self.max_lateral_error, abs(lateral_error))
 
         # Max x and y offsets of future waypoints
         for i in range(1,41):

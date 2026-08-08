@@ -73,16 +73,28 @@ class CustomEnv(Env):
         self.max_lookahead = 40
         self.max_offset_meters = 2.0
 
+        # Lookahead distance and lateral offset
         self.action_space = Box(
             low=np.array([-1.0, -1.0], dtype=np.float32),
             high=np.array([1.0, 1.0], dtype=np.float32),
             dtype=np.float32,
         )
 
-        self.observation_space = ...
+        self.previous_action = np.zeros(2, dtype=np.float32)
+
+        self.observation_space = self.observation_space = Box(
+            low=-1.0,
+            high=1.0,
+            shape=(87,),
+            dtype=np.float32,
+        )
+
+        self.previous_observation = np.zeros(87, dtype=np.float32)
 
         self.is_setup = False
         self.is_closed = False
+
+        self.previous_yaw = 0
 
     async def setup(self) -> None:
         """
@@ -95,7 +107,24 @@ class CustomEnv(Env):
         if self.is_setup:
             return
 
-        self.waypoints = list(self.world.maneuverable_waypoints)
+        self.waypoints = (
+            roar_py_interface.RoarPyWaypoint.load_waypoint_list(
+                np.load(f"{os.path.dirname(__file__)}\\waypoints\\waypointsPrimary.npz")
+            )[35:]
+        )
+        
+        self.path_yaw = []
+
+        for i in range(len(self.maneuverable_waypoints)):
+            current_wp = self.maneuverable_waypoints[i]
+            next_wp = self.maneuverable_waypoints[(i + 1) % len(self.maneuverable_waypoints)]
+
+            dx = next_wp.location[0] - current_wp.location[0]
+            dy = next_wp.location[1] - current_wp.location[1]
+            yaw = np.arctan2(dy, dx)
+            self.path_yaw.append(yaw)
+
+        self.path_yaw = np.array(self.path_yaw)
 
         # Spawn the vehicle and attach sensors
         starting_waypoint = self.waypoints[0]
@@ -164,11 +193,126 @@ class CustomEnv(Env):
 
         self.is_setup = True
 
+    def calculate_section_progress(self):
+        total_possible_progress = self.section_end_index - self.section_start_index
+        current_progress = self.current_waypoint_index - self.section_start_index
+        section_progress = current_progress / total_possible_progress
+
+        return section_progress
+
+    def normalize_angle(self, angle):
+        TAU = 2 * np.pi
+        return (angle % TAU + TAU) % TAU - np.pi
+
     def get_observation(self) -> np.ndarray:
-        pass
+        '''
+        Features included in the observation space:
+            - Yaw Rate
+            - Heading Error
+            - Speed
+            - Lateral Error
+            - Relative x offset of future 40 waypoints
+            - Relative y offset of future 40 waypoints
+            - Section Progress
+            - Previous Action
+        '''
+        observation = np.empty((1, 87), dtype=np.float32)
+        # Yaw Rate
+        vehicle_rpy = self.rpy_sensor.get_last_gym_observation()
+        yaw_change = vehicle_rpy[2] - self.previous_yaw
+        self.previous_yaw = vehicle_rpy[2]
+
+        normalized_yaw_rate = (self.normalize_angle(yaw_change) / 0.05) / 65
+        observation[0, 0] = normalized_yaw_rate
+
+        # Heading Error
+        path_yaw = self.path_yaw[self.current_waypoint_idx]
+
+        heading_error = path_yaw - vehicle_rpy[2]
+        heading_error = self.normalize_angle(heading_error)
+
+        normalized_heading_error = heading_error / np.pi
+        observation[0, 1] = normalized_heading_error
+
+        # Speed
+        vehicle_velocity = self.velocity_sensor.get_last_gym_observation()
+        vehicle_velocity_norm = np.linalg.norm(vehicle_velocity)
+        normalized_speed = np.clip((vehicle_velocity_norm * 3.6) / 60.0, -1.0, 1.0)
+        observation[0, 2] = normalized_speed
+
+        # Lateral Error
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        previous_wp = self.maneuverable_waypoints[self.current_waypoint_idx - 1].location
+        next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + 1) % len(self.maneuverable_waypoints)].location
+        path = next_wp - previous_wp
+        lateral_error = (path[1]*vehicle_location[0] - path[0]*vehicle_location[1] + next_wp[0]*previous_wp[1] - next_wp[1]*previous_wp[0]) / np.sqrt((path[0]**2 + path[1]**2))
+        normalized_lateral_error = np.clip(lateral_error / 3.0, -1.0, 1.0)
+        observation[0, 3] = normalized_lateral_error
+
+        # x and y offsets of future waypoints
+        normalized_x_offsets = []
+        normalized_y_offsets = []
+
+        for i in range(1,41):
+            idx = (self.current_waypoint_idx + i * 5) % len(self.maneuverable_waypoints)
+
+            waypoint = self.maneuverable_waypoints[idx]
+            dx = waypoint.location[0] - vehicle_location[0]
+            dy = waypoint.location[1] - vehicle_location[1]
+
+            distance = np.sqrt(dx**2 + dy**2)
+            global_angle_to_wp = np.arctan2(dy, dx)
+            local_angle_to_wp = global_angle_to_wp - vehicle_rpy[2]
+
+            normalized_relative_angle = self.normalize_angle(local_angle_to_wp)
+
+            x_offset = distance * np.cos(normalized_relative_angle)
+            y_offset = distance * np.sin(normalized_relative_angle)
+
+            normalized_x_offset = np.clip(x_offset / 400.0, -1.0, 1.0)
+            normalized_y_offset = np.clip(y_offset / 300.0, -1.0, 1.0)
+            normalized_x_offsets.append(normalized_x_offset)
+            normalized_y_offsets.append(normalized_y_offset)
+
+        observation[0, 4:44] = normalized_x_offsets
+        observation[0, 44:84] = normalized_y_offsets
+
+        # Section Progress
+        section_progress = self.calculate_section_progress()
+        observation[0, 84] = section_progress
+
+        # Previous Action
+        previous_lookahead_action = self.previous_action[0]
+        previous_offset_action = self.previous_action[1]
+        observation[0, 85] = previous_lookahead_action
+        observation[0, 86] = previous_offset_action
+
+        return observation
 
     def step(self, action):
-        pass
+        '''
+        1. Action converted to lookahead distance and lateral offset
+        2. Apply action to the vehicle using the lateral and throttle controllers
+        3. Advance the simulation for a certain number of steps/ticks
+        4. Get next world step'sensor data
+        5. Calculate reward based on the acquired data
+        6. Store action and get new observation for the next step
+        7. Return observation, reward, done, info
+        '''
+
+        lookahead_distance = action[0] * (self.max_lookahead - self.self.min_lookahead) + self.min_lookahead
+        lateral_offset = action[1] * self.max_offset_meters
+
+        target_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + int(lookahead_distance)) % len(self.maneuverable_waypoints)]
+        
+        modified_wp = target_wp.copy()
+        
+
+        self.world.step()
+        self.previous_observation = self.get_observation()
+
+
+        return self.previous_observation
 
     def reset(self):
         pass
