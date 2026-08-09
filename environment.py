@@ -294,25 +294,83 @@ class CustomEnv(Env):
         1. Action converted to lookahead distance and lateral offset
         2. Apply action to the vehicle using the lateral and throttle controllers
         3. Advance the simulation for a certain number of steps/ticks
-        4. Get next world step'sensor data
+        4. Get next world step's sensor data
         5. Calculate reward based on the acquired data
         6. Store action and get new observation for the next step
         7. Return observation, reward, done, info
         '''
 
-        lookahead_distance = action[0] * (self.max_lookahead - self.self.min_lookahead) + self.min_lookahead
+        # 1. Action converted to lookahead distance and lateral offset
+        lookahead_distance = action[0] * (self.max_lookahead - self.min_lookahead) + self.min_lookahead
         lateral_offset = action[1] * self.max_offset_meters
 
         target_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + int(lookahead_distance)) % len(self.maneuverable_waypoints)]
-        
         modified_wp = target_wp.copy()
+
+        prev_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + int(lookahead_distance) - 1) % len(self.maneuverable_waypoints)]
+        next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + int(lookahead_distance) + 1) % len(self.maneuverable_waypoints)]
+
+        path = next_wp.location - prev_wp.location
+
+        angle = np.arctan2(path[1], path[0])
+        angle = self.normalize_angle(angle)
+        perpendicular_angle = angle + np.pi / 2.0
+
+        modified_wp.location[0] += lateral_offset * np.cos(perpendicular_angle)
+        modified_wp.location[1] += lateral_offset * np.sin(perpendicular_angle)
+
+        # 2. Apply action to the vehicle using the lateral and throttle controllers
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        vehicle_rotation = self.rpy_sensor.get_last_gym_observation()
+        steering_command = self.lat_controller.run(vehicle_location, vehicle_rotation, modified_wp.location, self.current_waypoint_idx)
+
         
 
+
+        
+        # 3. Advance the simulation for a certain number of steps/ticks
         self.world.step()
+
+
         self.previous_observation = self.get_observation()
 
 
         return self.previous_observation
+
+    def get_lateral_error(self):
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        previous_wp = self.maneuverable_waypoints[self.current_waypoint_idx - 1].location
+        next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + 1) % len(self.maneuverable_waypoints)].location
+        path = next_wp - previous_wp
+        lateral_error = (path[1]*vehicle_location[0] - path[0]*vehicle_location[1] + next_wp[0]*previous_wp[1] - next_wp[1]*previous_wp[0]) / np.sqrt((path[0]**2 + path[1]**2))
+        return lateral_error      
+
+    def shift_wapoint_path(self, shift_amount, lookahead_distance, waypoints_to_shift):
+        shift_percentage = 1 / len(waypoints_to_shift)
+
+        current_offset = self.get_lateral_error()
+
+        i = 0
+        for wp in waypoints_to_shift:
+            prev_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + int(lookahead_distance) - 1) % len(self.maneuverable_waypoints)]
+            next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + int(lookahead_distance) + 1) % len(self.maneuverable_waypoints)]
+
+            path = next_wp.location - prev_wp.location
+
+            angle = np.arctan2(path[1], path[0])
+            angle = self.normalize_angle(angle)
+            perpendicular_angle = angle + np.pi / 2.0
+            
+            # Smoothstep function
+            smoothstep = 3 * (i * shift_percentage)**2 - 2 * (i * shift_percentage)**3
+
+            shift = current_offset + (shift_amount * current_offset) * smoothstep
+
+            wp.location[0] += shift * np.cos(perpendicular_angle)
+            wp.location[1] += shift * np.sin(perpendicular_angle)
+            i += 1
+
+        return waypoints_to_shift
 
     def reset(self):
         pass
