@@ -1,3 +1,4 @@
+import SectionStats
 import gym
 from gym import Env
 from gym.spaces import Discrete, Box
@@ -95,6 +96,8 @@ class CustomEnv(Env):
         self.is_closed = False
 
         self.previous_yaw = 0
+
+        self.old_progress = 0.0
 
     async def setup(self) -> None:
         """
@@ -199,6 +202,12 @@ class CustomEnv(Env):
         section_progress = current_progress / total_possible_progress
 
         return section_progress
+    
+    def calculate_new_section_progress(self):
+        new_progress = self.calculate_section_progress()
+        section_progress_change = new_progress - self.old_progress
+        self.old_progress = new_progress
+        return section_progress_change
 
     def normalize_angle(self, angle):
         TAU = 2 * np.pi
@@ -278,7 +287,7 @@ class CustomEnv(Env):
         observation[0, 44:84] = normalized_y_offsets
 
         # Section Progress
-        section_progress = self.calculate_section_progress()
+        section_progress = self.calculate_new_section_progress()
         observation[0, 84] = section_progress
 
         # Previous Action
@@ -297,8 +306,11 @@ class CustomEnv(Env):
         4. Get next world step's sensor data
         5. Calculate reward based on the acquired data
         6. Store action and get new observation for the next step
-        7. Return observation, reward, done, info
+        7. Return observation, reward, done, truncated, info
         '''
+        vehicle_velocity = self.velocity_sensor.get_last_gym_observation()
+        vehicle_velocity_norm = np.linalg.norm(vehicle_velocity)
+        current_speed_kmh = vehicle_velocity_norm * 3.6
 
         # 1. Action converted to lookahead distance and lateral offset
         lookahead_distance = action[0] * (self.max_lookahead - self.min_lookahead) + self.min_lookahead
@@ -322,20 +334,76 @@ class CustomEnv(Env):
         # 2. Apply action to the vehicle using the lateral and throttle controllers
         vehicle_location = self.location_sensor.get_last_gym_observation()
         vehicle_rotation = self.rpy_sensor.get_last_gym_observation()
-        steering_command = self.lat_controller.run(vehicle_location, vehicle_rotation, modified_wp.location, self.current_waypoint_idx)
+        steer_control = self.lat_controller.run(vehicle_location, vehicle_rotation, modified_wp.location, self.current_waypoint_idx)
 
+        future_waypoints = self.shift_wapoint_path(lateral_offset, lookahead_distance, modified_wp, self.maneuverable_waypoints[(self.current_waypoint_idx + 1)  % len(self.maneuverable_waypoints):(self.section_end_index % len(self.maneuverable_waypoints))].deepcopy()  )
+        throttle, brake, gear = self.speed_controller.run(future_waypoints, vehicle_location, current_speed_kmh, self.get_current_section(), future_waypoints)
+
+        # Hand-tuned steering multipliers not included to allow PPO to learn the optimal steering behavior.
+        steerMultiplier = round((current_speed_kmh + 0.001) / 120, 3)
+        steer_value = np.clip(steer_control * steerMultiplier, -1, 1)
+
+        control = {
+            "throttle": np.clip(throttle, 0, 1),
+            "steer": steer_value,
+            "brake": np.clip(brake, 0, 1),
+            "hand_brake": 0,
+            "reverse": 0,
+            "target_gear": gear,
+        }
+
+        # 3. Advance the simulation for a certain number of steps
+        self.next_world_step(control)
         
+        # 4. Get next world step's sensor data
+        self.current_waypoint_index = self.vehicle.current_waypoint_index
+        new_progress = self.calculate_new_section_progress()
+        crashed = self.collision_sensor.get_last_gym_observation() > self.collision_threshold
 
+        # 5. Calculate reward based on the acquired data
+        collision = np.linalg.norm(self.collision_sensor.get_last_observation().impulse_normal)
+        if collision > self.collision_threshold:
+            crashed = True
+            collision = 1
+        else:
+            collision = 0
+        reward = new_progress * 100.0 - (collision * self.collision_penalty) - 1
 
-        
-        # 3. Advance the simulation for a certain number of steps/ticks
-        self.world.step()
-
-
+        # 6. Store action and get new observation for the next step
+        self.previous_action = action
         self.previous_observation = self.get_observation()
 
+        self.episode_steps += 1
 
-        return self.previous_observation
+        terminated = False
+        truncated = False
+
+        info = {
+            "done": terminated,
+            "truncated": truncated,
+            "reason": "",
+        }
+
+        if crashed:
+            terminated = True
+            info["reason"] = "Vehicle crashed"
+        elif self.episode_steps >= self.max_episode_steps:
+            truncated = True
+            info["reason"] = "Max episode steps reached"
+        elif self.current_waypoint_idx > self.section_end_index:
+            terminated = True
+            info["reason"] = "Completed Section"
+
+        return self.previous_observation, reward, terminated, truncated, info
+
+    async def next_world_step(self, control):
+        await self.vehicle.apply_action(control)
+        await self.world.step()
+        await self.vehicle.receive_observation()
+
+    def get_current_section(self):
+        section_num = SectionStats.filter_waypoints(self.maneuverable_waypoints, self.location_sensor, self.velocity_sensor)
+        return section_num
 
     def get_lateral_error(self):
         vehicle_location = self.location_sensor.get_last_gym_observation()
@@ -345,26 +413,29 @@ class CustomEnv(Env):
         lateral_error = (path[1]*vehicle_location[0] - path[0]*vehicle_location[1] + next_wp[0]*previous_wp[1] - next_wp[1]*previous_wp[0]) / np.sqrt((path[0]**2 + path[1]**2))
         return lateral_error      
 
-    def shift_wapoint_path(self, shift_amount, lookahead_distance, waypoints_to_shift):
+    def shift_wapoint_path(self, shift_amount, lookahead_distance, target_wp, waypoints_to_shift):
         shift_percentage = 1 / len(waypoints_to_shift)
 
         current_offset = self.get_lateral_error()
 
         i = 0
         for wp in waypoints_to_shift:
-            prev_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + int(lookahead_distance) - 1) % len(self.maneuverable_waypoints)]
-            next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + int(lookahead_distance) + 1) % len(self.maneuverable_waypoints)]
+            prev_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + i + int(lookahead_distance) - 1) % len(self.maneuverable_waypoints)]
+            next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + i + int(lookahead_distance) + 1) % len(self.maneuverable_waypoints)]
 
             path = next_wp.location - prev_wp.location
 
             angle = np.arctan2(path[1], path[0])
             angle = self.normalize_angle(angle)
             perpendicular_angle = angle + np.pi / 2.0
-            
+
             # Smoothstep function
             smoothstep = 3 * (i * shift_percentage)**2 - 2 * (i * shift_percentage)**3
-
-            shift = current_offset + (shift_amount * current_offset) * smoothstep
+            
+            if self.current_waypoint_idx + i <= self.current_waypoint_index + int(lookahead_distance):
+                shift = current_offset + (shift_amount - current_offset) * smoothstep
+            else:
+                shift = current_offset + (shift_amount - current_offset) * (1 - smoothstep)
 
             wp.location[0] += shift * np.cos(perpendicular_angle)
             wp.location[1] += shift * np.sin(perpendicular_angle)
