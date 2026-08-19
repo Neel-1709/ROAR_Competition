@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import json
 import os
 import threading
 
@@ -655,262 +656,384 @@ class CustomEnv(Env):
         return observation, {}
 
     async def reset_async(self):
-        # ============================================================
-        # 1. DESTROY OLD VEHICLE
-        # ============================================================
+        max_baseline_retries = 5
 
-        if self.vehicle is not None:
-            self.vehicle.close()
-            self.vehicle = None
+        # ------------------------------------------------------------
+        # Load recorded baseline states
+        # ------------------------------------------------------------
+        with open("baseline_states.json", "r") as f:
+            baseline_states = json.load(f)
 
-        # Clear references to sensors attached to the old vehicle.
-        self.camera_sensor = None
-        self.location_sensor = None
-        self.velocity_sensor = None
-        self.rpy_sensor = None
-        self.occupancy_map_sensor = None
-        self.collision_sensor = None
-        self.vehicle_wrapper = None
+        spawn_key = str(self.spawn_waypoint_index)
 
-        # Give CARLA a couple ticks to remove the old actor before
-        # trying to spawn another vehicle at the same location.
-        for _ in range(2):
-            await self.world.step()
-
-        # ============================================================
-        # 2. SPAWN FRESH VEHICLE EXACTLY LIKE competition_runner.py
-        # ============================================================
-
-        world_waypoints = self.world.maneuverable_waypoints
-
-        self.vehicle = self.world.spawn_vehicle(
-            "vehicle.tesla.model3",
-            world_waypoints[0].location + np.array([0.0, 0.0, 1.0]),
-            world_waypoints[0].roll_pitch_yaw,
-            True,
-        )
-
-        if self.vehicle is None:
+        if spawn_key not in baseline_states:
             raise RuntimeError(
-                "Fresh vehicle failed to spawn at competition start."
+                f"No baseline state recorded for waypoint "
+                f"{self.spawn_waypoint_index}"
             )
 
-        vehicle = self.vehicle
+        spawn_state = baseline_states[spawn_key]
 
-        # ============================================================
-        # 3. ATTACH FRESH SENSORS EXACTLY LIKE competition_runner.py
-        # ============================================================
+        for attempt in range(max_baseline_retries):
 
-        self.camera_sensor = vehicle.attach_camera_sensor(
-            roar_py_interface.RoarPyCameraSensorDataRGB,
-            np.array(
-                [
+            # --------------------------------------------------------
+            # 1. Remove previous vehicle
+            # --------------------------------------------------------
+            if self.vehicle is not None:
+                self.vehicle.close()
+                self.vehicle = None
+
+            self.camera_sensor = None
+            self.location_sensor = None
+            self.velocity_sensor = None
+            self.rpy_sensor = None
+            self.occupancy_map_sensor = None
+            self.collision_sensor = None
+            self.vehicle_wrapper = None
+
+            # Allow CARLA to remove old actor
+            for _ in range(2):
+                await self.world.step()
+
+            # --------------------------------------------------------
+            # 2. Spawn a fresh vehicle at the SAFE competition spawn
+            # --------------------------------------------------------
+            world_waypoints = self.world.maneuverable_waypoints
+
+            self.vehicle = self.world.spawn_vehicle(
+                "vehicle.tesla.model3",
+                world_waypoints[0].location
+                + np.array([0.0, 0.0, 1.0]),
+                world_waypoints[0].roll_pitch_yaw,
+                True,
+            )
+
+            if self.vehicle is None:
+                print(
+                    f"Vehicle spawn failed on attempt "
+                    f"{attempt + 1}/{max_baseline_retries}"
+                )
+                continue
+
+            vehicle = self.vehicle
+
+            # --------------------------------------------------------
+            # 3. Attach fresh sensors
+            # --------------------------------------------------------
+            self.camera_sensor = vehicle.attach_camera_sensor(
+                roar_py_interface.RoarPyCameraSensorDataRGB,
+                np.array([
                     -2.0 * vehicle.bounding_box.extent[0],
                     0.0,
                     3.0 * vehicle.bounding_box.extent[2],
-                ]
-            ),
-            np.array(
-                [
+                ]),
+                np.array([
                     0.0,
                     10.0 / 180.0 * np.pi,
                     0.0,
-                ]
-            ),
-            image_width=1024,
-            image_height=768,
-        )
-
-        self.location_sensor = (
-            vehicle.attach_location_in_world_sensor()
-        )
-
-        self.velocity_sensor = (
-            vehicle.attach_velocimeter_sensor()
-        )
-
-        self.rpy_sensor = (
-            vehicle.attach_roll_pitch_yaw_sensor()
-        )
-
-        self.occupancy_map_sensor = (
-            vehicle.attach_occupancy_map_sensor(
-                50,
-                50,
-                2.0,
-                2.0,
+                ]),
+                image_width=1024,
+                image_height=768,
             )
-        )
 
-        self.collision_sensor = (
-            vehicle.attach_collision_sensor(
-                np.zeros(3),
-                np.zeros(3),
+            self.location_sensor = (
+                vehicle.attach_location_in_world_sensor()
             )
-        )
 
-        assert self.camera_sensor is not None
-        assert self.location_sensor is not None
-        assert self.velocity_sensor is not None
-        assert self.rpy_sensor is not None
-        assert self.occupancy_map_sensor is not None
-        assert self.collision_sensor is not None
+            self.velocity_sensor = (
+                vehicle.attach_velocimeter_sensor()
+            )
 
-        self.vehicle_wrapper = (
-            RoarCompetitionAgentWrapper(vehicle)
-        )
+            self.rpy_sensor = (
+                vehicle.attach_roll_pitch_yaw_sensor()
+            )
 
-        # ============================================================
-        # 4. SETTLE VEHICLE EXACTLY LIKE competition_runner.py
-        # ============================================================
+            self.occupancy_map_sensor = (
+                vehicle.attach_occupancy_map_sensor(
+                    50,
+                    50,
+                    2.0,
+                    2.0,
+                )
+            )
 
-        for _ in range(20):
+            self.collision_sensor = (
+                vehicle.attach_collision_sensor(
+                    np.zeros(3),
+                    np.zeros(3),
+                )
+            )
+
+            self.vehicle_wrapper = (
+                RoarCompetitionAgentWrapper(vehicle)
+            )
+
+            # Let the fresh actor/sensors exist for a few ticks
+            for _ in range(5):
+                await self.world.step()
+
+            # --------------------------------------------------------
+            # 4. Restore recorded physical baseline state
+            # --------------------------------------------------------
+            spawn_location = np.array(
+                spawn_state["location"],
+                dtype=np.float64,
+            )
+
+            spawn_rpy = np.array(
+                spawn_state["rpy"],
+                dtype=np.float64,
+            )
+
+            spawn_velocity = np.array(
+                spawn_state["linear_velocity"],
+                dtype=np.float64,
+            )
+
+            self.vehicle.set_transform(
+                spawn_location,
+                spawn_rpy,
+            )
+
+            self.vehicle.set_linear_3d_velocity(
+                spawn_velocity
+            )
+
+            # Angular velocity was not recorded.
+            self.vehicle.set_angular_velocity(
+                np.zeros(3)
+            )
+
+            # Restore the baseline control that was active at this
+            # waypoint. This is preferable to starting the moving
+            # vehicle with a completely neutral command.
+            # Put the car at the recorded baseline state
+            self.vehicle.set_transform(
+                spawn_location,
+                spawn_rpy,
+            )
+
+            self.vehicle.set_linear_3d_velocity(
+                spawn_velocity
+            )
+
+            self.vehicle.set_angular_velocity(
+                np.zeros(3)
+            )
+
+            # Neutral steering while CARLA accepts the teleport.
+            neutral_control = {
+                "throttle": 0.0,
+                "steer": 0.0,
+                "brake": 0.0,
+                "hand_brake": 0,
+                "reverse": 0,
+                "target_gear": 1,
+            }
+
+            await self.vehicle.apply_action(neutral_control)
+
+            # Only one synchronization tick
             await self.world.step()
-
-        await self.vehicle.receive_observation()
-
-        # ============================================================
-        # 5. CREATE FRESH BASELINE SOLUTION
-        # ============================================================
-
-        baseline = RoarCompetitionSolution(
-            world_waypoints,
-            self.vehicle_wrapper,
-            self.camera_sensor,
-            self.location_sensor,
-            self.velocity_sensor,
-            self.rpy_sensor,
-            self.occupancy_map_sensor,
-            self.collision_sensor,
-        )
-
-        await baseline.initialize()
-
-        # Do NOT manually alter baseline.current_waypoint_idx.
-        # Do NOT manually alter baseline.current_section.
-        #
-        # This is now a true competition start, so submission.py's
-        # normal initialization is the correct state.
-
-        self.current_waypoint_index = (
-            baseline.current_waypoint_idx
-        )
-
-        # ============================================================
-        # 6. BASELINE RUN-UP TO TRAINING SECTION
-        # ============================================================
-
-        warmup_origin = baseline.current_waypoint_idx
-
-        warmup_target_distance = self._forward_distance(
-            warmup_origin,
-            self.section_start_index,
-        )
-
-        warmup_steps = 0
-        max_warmup_steps = 5000
-
-        while True:
-            # How far along the lap has the baseline traveled
-            # since this episode began?
-            current_distance = self._forward_distance(
-                warmup_origin,
-                baseline.current_waypoint_idx,
-            )
-
-            if current_distance >= warmup_target_distance:
-                break
-
-            # --------------------------------------------------------
-            # Match competition_runner.py loop ordering
-            # --------------------------------------------------------
-
-            # 1. Receive latest sensor state
             await self.vehicle.receive_observation()
 
-            # 2. Render exactly like competition_runner.py
-            if self.enable_visualization:
-                result = self.viewer.render(
-                    self.camera_sensor.get_last_observation()
-                )
-
-                if result is None:
-                    raise RuntimeError(
-                        "Viewer was closed during baseline warmup."
-                    )
-
-            # 3. Collision check
-            collision_impulse = np.linalg.norm(
-                self.collision_sensor
-                .get_last_observation()
-                .impulse_normal
+            # --------------------------------------------------------
+            # 5. Create fresh baseline controller
+            # --------------------------------------------------------
+            baseline = RoarCompetitionSolution(
+                world_waypoints,
+                self.vehicle_wrapper,
+                self.camera_sensor,
+                self.location_sensor,
+                self.velocity_sensor,
+                self.rpy_sensor,
+                self.occupancy_map_sensor,
+                self.collision_sensor,
             )
 
-            if collision_impulse > self.collision_threshold:
-                raise RuntimeError(
-                    "Fresh baseline vehicle crashed before "
-                    "reaching the training section."
-                )
+            await baseline.initialize()
 
-            # 4. submission.py computes and applies control
-            await baseline.step()
-
-            # 5. Advance CARLA
-            await self.world.step()
+            # initialize() should locate the vehicle from its sensor
+            # position, but synchronize explicitly with the recorded
+            # waypoint since this is a deliberate mid-lap spawn.
+            baseline.current_waypoint_idx = (
+                self.spawn_waypoint_index
+            )
 
             self.current_waypoint_index = (
-                baseline.current_waypoint_idx
+                self.spawn_waypoint_index
             )
 
-            warmup_steps += 1
+            # initialize() always begins in section 0.
+            # Correct it for the mid-lap snapshot.
+            baseline.current_section = (
+                self._current_section_from_index(
+                    self.spawn_waypoint_index
+                )
+            )
 
-            if warmup_steps >= max_warmup_steps:
-                raise RuntimeError(
-                    "Baseline warmup failed to reach "
-                    "the training section."
+            baseline.previous_timing_section = (
+                baseline.current_section
+            )
+
+            await baseline.step()
+            await self.world.step()
+            await self.vehicle.receive_observation()
+
+            print(
+                f"SNAPSHOT RESPAWN | "
+                f"wp={self.spawn_waypoint_index} "
+                f"section={baseline.current_section} "
+                f"speed={spawn_state['speed_kmh']:.1f} km/h"
+            )
+
+            # --------------------------------------------------------
+            # 6. Baseline warm-up from snapshot to PPO section
+            # --------------------------------------------------------
+            warmup_origin = (
+                self.spawn_waypoint_index
+            )
+
+            warmup_target_distance = (
+                self._forward_distance(
+                    warmup_origin,
+                    self.section_start_index,
+                )
+            )
+
+            warmup_steps = 0
+            max_warmup_steps = 1000
+            warmup_failed = False
+
+            while True:
+                current_distance = (
+                    self._forward_distance(
+                        warmup_origin,
+                        baseline.current_waypoint_idx,
+                    )
                 )
 
-        # ============================================================
-        # 7. GET FINAL STATE AFTER BASELINE RUN-UP
-        # ============================================================
+                if (
+                    current_distance
+                    >= warmup_target_distance
+                ):
+                    break
 
-        await self.vehicle.receive_observation()
+                # Latest simulator state
+                await self.vehicle.receive_observation()
 
-        vehicle_location = (
-            self.location_sensor.get_last_gym_observation()
-        )
+                if self.enable_visualization:
+                    result = self.viewer.render(
+                        self.camera_sensor
+                        .get_last_observation()
+                    )
 
-        self.current_waypoint_index = filter_waypoints(
-            vehicle_location,
-            baseline.current_waypoint_idx,
-            self.maneuverable_waypoints,
-        )
+                    if result is None:
+                        raise RuntimeError(
+                            "Viewer was closed."
+                        )
 
-        print(
-            f"PPO TAKEOVER | "
-            f"wp={self.current_waypoint_index} "
-            f"target_start={self.section_start_index} "
-            f"warmup_steps={warmup_steps}"
-        )
+                # Collision check
+                collision_impulse = np.linalg.norm(
+                    self.collision_sensor
+                    .get_last_observation()
+                    .impulse_normal
+                )
 
-        # ============================================================
-        # 8. RESET PPO-SIDE CONTROLLER STATE
-        # ============================================================
+                if (
+                    collision_impulse
+                    > self.collision_threshold
+                ):
+                    print(
+                        f"Baseline warmup crashed on "
+                        f"attempt {attempt + 1}/"
+                        f"{max_baseline_retries}. "
+                        f"Restarting snapshot..."
+                    )
 
-        self.lat_controller = LatController()
-        self.speed_controller = ThrottleController()
+                    warmup_failed = True
+                    break
 
-        self.episode_steps = 0
+                # Exact baseline controller
+                await baseline.step()
 
-        self.previous_action = np.zeros(
-            2,
-            dtype=np.float32,
-        )
+                # Advance simulator
+                await self.world.step()
 
-        self.previous_yaw = None
+                self.current_waypoint_index = (
+                    baseline.current_waypoint_idx
+                )
 
-        self.old_progress = (
-            self.calculate_section_progress()
+                warmup_steps += 1
+
+                if warmup_steps >= max_warmup_steps:
+                    print(
+                        f"Baseline warmup timed out on "
+                        f"attempt {attempt + 1}/"
+                        f"{max_baseline_retries}."
+                    )
+
+                    warmup_failed = True
+                    break
+
+            # --------------------------------------------------------
+            # 7. Failed warm-up -> recreate from same snapshot
+            # --------------------------------------------------------
+            if warmup_failed:
+                continue
+
+            # --------------------------------------------------------
+            # 8. Successful warm-up -> PPO takeover
+            # --------------------------------------------------------
+            await self.vehicle.receive_observation()
+
+            vehicle_location = (
+                self.location_sensor
+                .get_last_gym_observation()
+            )
+
+            self.current_waypoint_index = (
+                filter_waypoints(
+                    vehicle_location,
+                    baseline.current_waypoint_idx,
+                    self.maneuverable_waypoints,
+                )
+            )
+
+            # Fresh PPO-side controller state
+            self.lat_controller = LatController()
+            self.speed_controller = ThrottleController()
+
+            self.episode_steps = 0
+
+            self.previous_action = np.zeros(
+                2,
+                dtype=np.float32,
+            )
+
+            self.previous_yaw = None
+
+            self.old_progress = (
+                self.calculate_section_progress()
+            )
+
+            print(
+                f"Baseline warmup succeeded. "
+                f"Snapshot={self.spawn_waypoint_index}, "
+                f"PPO takeover="
+                f"{self.current_waypoint_index}, "
+                f"warmup_ticks={warmup_steps}"
+            )
+
+            return
+
+        # ------------------------------------------------------------
+        # All snapshot warm-up attempts failed
+        # ------------------------------------------------------------
+        raise RuntimeError(
+            f"Baseline failed to reach section start "
+            f"after {max_baseline_retries} snapshot "
+            f"respawn attempts."
         )
 
     def render_camera(self):
