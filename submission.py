@@ -152,8 +152,20 @@ class RoarCompetitionSolution:
             "max_lateral_error": 0.0,
             "max_waypoint_x": 0.0,
             "max_waypoint_y": 0.0,
+            "min_progress": 0.0
         }
         self.saved_stats = False
+
+        self.section_ticks = 0
+        self.timing_section = False
+
+        self.timing_section = None
+        self.section_ticks = 0
+        self.previous_timing_section = self.current_section
+        self.skip_initial_section = True
+
+        self.baseline_states = {}
+        self.disable_waypoint_line = False
 
     async def initialize(self) -> None:
         # NOTE waypoints are changed through this line
@@ -212,6 +224,7 @@ class RoarCompetitionSolution:
             vehicle_location, self.current_waypoint_idx, self.maneuverable_waypoints
         )
         self.previous_location = vehicle_location
+        self.old_progress = 0.0
 
 
     async def step(self) -> None:
@@ -247,9 +260,9 @@ class RoarCompetitionSolution:
         nextWaypointIndex = self.get_lookahead_index(current_speed_kmh)
         waypoint_to_follow = self.next_waypoint_smooth(current_speed_kmh, vehicle_location)
         waypoint_to_follow_location = waypoint_to_follow.location
-        snap_to_line_location = self.waypoint_line.get_next_waypoint_location(waypoint_to_follow.location)
-        if self.current_section  not in [0, 9]:
-            waypoint_to_follow_location = snap_to_line_location
+
+        if self.current_section not in [0, 9] and not self.disable_waypoint_line:
+            waypoint_to_follow_location = self.waypoint_line.get_next_waypoint_location(waypoint_to_follow.location)
 
         # Pure pursuit controller to steer the vehicle
         steer_control, steer_debug = self.lat_controller.run(
@@ -289,7 +302,6 @@ class RoarCompetitionSolution:
                     self.previous_brake = True
             if current_speed_kmh < 160:
                 self.s3_mult = 0.75
-            print(f"spd {current_speed_kmh} mult{self.s3_mult} sec={self.current_section}")
         if self.current_waypoint_idx in [802, 803, 804]:
             self.previous_brake = False
 
@@ -320,7 +332,6 @@ class RoarCompetitionSolution:
                 steerMultiplier = max(steerMultiplier, 1.5)
 
         steer_value = np.clip(steer_control * steerMultiplier, -1, 1)
-
         
         # sec3
         if  820 < self.current_waypoint_idx < 837:
@@ -468,6 +479,90 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
         self.stats['max_lateral_error'] = np.max([self.stats['max_lateral_error'], self.max_lateral_error])
         self.stats['max_waypoint_x'] = np.max([self.stats['max_waypoint_x'], self.max_waypoint_x])
         self.stats['max_waypoint_y'] = np.max([self.stats['max_waypoint_y'], self.max_waypoint_y])
+        
+        # ============================================================
+        # SECTION TIMING
+        # ============================================================
+
+        # Detect entering a new section
+        if self.current_section != self.previous_timing_section:
+
+            # --------------------------------------------------------
+            # Finish timing the section we just left
+            # --------------------------------------------------------
+            if self.timing_section is not None:
+                section_time = self.section_ticks * 0.05
+
+                record = {
+                    "lap": self.lapNum,
+                    "section": self.timing_section,
+                    "time": round(section_time, 3),
+                }
+
+                print(
+                    f"LAP {self.lapNum} "
+                    f"SECTION {self.timing_section} "
+                    f"TIME: {section_time:.3f} seconds"
+                )
+
+                filename = "section_times.json"
+
+                if os.path.exists(filename):
+                    with open(filename, "r") as f:
+                        try:
+                            data = json.load(f)
+                        except json.JSONDecodeError:
+                            data = []
+                else:
+                    data = []
+
+                data.append(record)
+
+                with open(filename, "w") as f:
+                    json.dump(data, f, indent=4)
+
+            # --------------------------------------------------------
+            # We started the race already inside a section and from
+            # rest, so do NOT record that first partial section.
+            # Once we cross the first boundary, normal timing begins.
+            # --------------------------------------------------------
+            if self.skip_initial_section:
+                self.skip_initial_section = False
+
+            # Start timing the NEW section
+            self.timing_section = self.current_section
+            self.section_ticks = 0
+
+            self.previous_timing_section = self.current_section
+
+
+        # Count only ticks belonging to the current timed section
+        if self.timing_section is not None:
+            self.section_ticks += 1
+        await self.vehicle.apply_action(control)
+
+        idx = self.current_waypoint_idx
+
+        state = {
+            "waypoint index": int(idx),
+            "location": self.location_sensor.get_last_gym_observation().tolist(),
+            "rpy": self.rpy_sensor.get_last_gym_observation().tolist(),
+            "linear_velocity": self.velocity_sensor.get_last_gym_observation().tolist(),
+            "speed_kmh": float(current_speed_kmh),
+            "control": {
+                "throttle": float(control["throttle"]),
+                "steer": float(control["steer"]),
+                "brake": float(control["brake"]),
+                "hand_brake": int(control["hand_brake"]),
+                "reverse": int(control["reverse"]),
+                "target_gear": int(control["target_gear"]),
+            },
+        }
+
+        self.baseline_states[str(idx)] = state
+
+        # with open("baseline_states.json", "w") as f:
+        #         json.dump(self.baseline_states, f, indent=4)
 
         if self.current_waypoint_idx == len(self.maneuverable_waypoints) - 1 and not self.saved_stats:
             # Updating stats JSON file
@@ -481,9 +576,7 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
             with open("observation_stats.json", "w") as f:
                 json.dump(data, f, indent=4)
             self.saved_stats = True
-
-        await self.vehicle.apply_action(control)
-
+                
         return control
 
     def normalize_angle(self, angle):
@@ -549,21 +642,21 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
         """
         If the speed is higher than 70, 'smooth out' the path that the car will take
         """
-        if self.current_section == 3:
+        if self.current_section == 3 and not self.disable_waypoint_line:
             kdd = 0.25
             distance = kdd * current_speed
             distance = np.clip(distance, 44, 70)
             location, _ = self.waypoint_line.get_lookahead_location(vehicle_location, distance)
             point = roar_py_interface.RoarPyWaypoint(location, roll_pitch_yaw=np.ndarray([0, 0, 0]), lane_width=0.0)
             return point
-        if self.current_section in [5, 7]:
+        if self.current_section in [5, 7] and not self.disable_waypoint_line:
             kdd = 0.25
             distance = kdd * current_speed
             distance = np.clip(distance, 30, 70)
             location, _ = self.waypoint_line.get_lookahead_location(vehicle_location, distance)
             point = roar_py_interface.RoarPyWaypoint(location, roll_pitch_yaw=np.ndarray([0, 0, 0]), lane_width=0.0)
             return point
-        if self.current_section in [6]:
+        if self.current_section == 6 and not self.disable_waypoint_line:
             kdd = 0.28
             distance = kdd * current_speed
             distance = np.clip(distance, 30, 70)

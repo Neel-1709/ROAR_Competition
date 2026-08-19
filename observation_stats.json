@@ -94,5 +94,1625 @@
         "max_lateral_error": 2.5497412974914884,
         "max_waypoint_x": 372.4390406413655,
         "max_waypoint_y": 235.7591828274842
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497449951885,
+        "max_speed": 55.95230140686035,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141501444693521,
+        "max_speed": 55.95227394104004,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1412100948702655,
+        "max_speed": 55.22973403930664,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1412100948702655,
+        "max_speed": 55.22973403930664,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1412100948702655,
+        "max_speed": 55.22973403930664,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1412100948702655,
+        "max_speed": 55.22973403930664,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1412023717031037,
+        "max_speed": 55.22972030639649,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141507028589685,
+        "max_speed": 54.74807281494141,
+        "max_lateral_error": 2.550032756980205,
+        "max_waypoint_x": 372.40709729159374,
+        "max_waypoint_y": 235.85714651488883,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.14120876328972,
+        "max_speed": 55.22972717285156,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1412018390708862,
+        "max_speed": 55.229710006713866,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1412100948702655,
+        "max_speed": 55.22973403930664,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141306174683505,
+        "max_speed": 52.71215515136719,
+        "max_lateral_error": 2.354300479563833,
+        "max_waypoint_x": 371.907382708482,
+        "max_waypoint_y": 234.18533371329264,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185040863477,
+        "max_heading_error": 3.141388865835353,
+        "max_speed": 52.73641777038574,
+        "max_lateral_error": 2.3192801565183188,
+        "max_waypoint_x": 372.02147432536776,
+        "max_waypoint_y": 233.58987527375515,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1412100948702655,
+        "max_speed": 55.22973403930664,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75867541519636,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141503566480268,
+        "max_speed": 54.108912277221684,
+        "max_lateral_error": 2.507846321870162,
+        "max_waypoint_x": 372.24478691939055,
+        "max_waypoint_y": 235.45854078719384,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414945204746854,
+        "max_speed": 55.95227394104004,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415031757482286,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414995804807564,
+        "max_speed": 55.95230827331543,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141498248900213,
+        "max_speed": 55.95229797363282,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414995804807564,
+        "max_speed": 55.95227394104004,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141501444693521,
+        "max_speed": 55.95227394104004,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141450969048739,
+        "max_speed": 56.0683032989502,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75920633857578,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141498248900213,
+        "max_speed": 55.95229797363282,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141450969048739,
+        "max_speed": 56.0683032989502,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75920633857578,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415001131129756,
+        "max_speed": 55.95230140686035,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415046404868274,
+        "max_speed": 55.952291107177736,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141450969048739,
+        "max_speed": 56.0683032989502,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75920633857578,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141499181006594,
+        "max_speed": 55.95230140686035,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141501711009628,
+        "max_speed": 55.952263641357426,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141450969048739,
+        "max_speed": 56.0683032989502,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75920633857578,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415027762740646,
+        "max_speed": 55.952256774902345,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.14148786257196,
+        "max_speed": 55.95230484008789,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141486131517251,
+        "max_speed": 55.952291107177736,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414965178455034,
+        "max_speed": 55.95230484008789,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415054394351554,
+        "max_speed": 55.95226707458496,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497183635776,
+        "max_speed": 55.952294540405276,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415054394351554,
+        "max_speed": 55.95226707458496,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414903925749957,
+        "max_speed": 55.95231513977051,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497449951885,
+        "max_speed": 55.95230140686035,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414926562619225,
+        "max_speed": 55.95227394104004,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497183635776,
+        "max_speed": 55.952294540405276,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415031757482286,
+        "max_speed": 55.9522705078125,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415082357542996,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415038415385013,
+        "max_speed": 55.95228080749512,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952256774902345,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415001131129756,
+        "max_speed": 55.95230140686035,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414566948450826,
+        "max_speed": 56.068323898315434,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.75920633857578,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497449951885,
+        "max_speed": 55.95230140686035,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952284240722655,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415046404868274,
+        "max_speed": 55.9522705078125,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414965178455034,
+        "max_speed": 55.95228080749512,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415046404868274,
+        "max_speed": 55.9522705078125,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414965178455034,
+        "max_speed": 55.95230484008789,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415043741707187,
+        "max_speed": 55.952263641357426,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.95227394104004,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415027762740646,
+        "max_speed": 55.952256774902345,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497449951885,
+        "max_speed": 55.95229797363282,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414965178455034,
+        "max_speed": 55.95228080749512,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415030425901733,
+        "max_speed": 55.952249908447264,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415046404868274,
+        "max_speed": 55.952291107177736,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141502509957956,
+        "max_speed": 55.952263641357426,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415046404868274,
+        "max_speed": 55.9522705078125,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141500645745193,
+        "max_speed": 55.952294540405276,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141495985213286,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497449951885,
+        "max_speed": 55.95230140686035,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415027762740646,
+        "max_speed": 55.952260208129886,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497449951885,
+        "max_speed": 55.95229797363282,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1414977162679936,
+        "max_speed": 55.95229797363282,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415031757482286,
+        "max_speed": 55.952291107177736,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141500645745193,
+        "max_speed": 55.9522705078125,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.141497449951885,
+        "max_speed": 55.95230140686035,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415027762740646,
+        "max_speed": 55.952260208129886,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
     }
 ]

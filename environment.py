@@ -140,9 +140,7 @@ class CustomEnv(Env):
         self.occupancy_map_sensor = vehicle.attach_occupancy_map_sensor(
             50, 50, 2.0, 2.0
         )
-        self.collision_sensor = vehicle.attach_collision_sensor(
-            np.zeros(3), np.zeros(3)
-        )
+        self.collision_sensor = vehicle.attach_collision_sensor(np.zeros(3), np.zeros(3))
 
         assert self.camera_sensor is not None
         assert self.location_sensor is not None
@@ -167,16 +165,8 @@ class CustomEnv(Env):
             self._respawn_rpy
         )
 
-        # Match RoarCompetitionRule.initialize_race().
-        # Save the ACTUAL settled competition-start transform.
-        self._competition_respawn_location = (
-            self.vehicle.get_3d_location().copy()
-        )
-
-        self._competition_respawn_rpy = (
-            self.vehicle.get_roll_pitch_yaw().copy()
-        )
-
+        self._competition_respawn_location = self.vehicle.get_3d_location().copy()
+        self._competition_respawn_rpy = self.vehicle.get_roll_pitch_yaw().copy()
         self.maneuverable_waypoints = (
             roar_py_interface.RoarPyWaypoint.load_waypoint_list(
                 np.load(
@@ -185,14 +175,10 @@ class CustomEnv(Env):
             )[35:]
         )
 
-        self.path_yaw = np.empty(
-            len(self.maneuverable_waypoints),
-            dtype=np.float64,
-        )
+        self.path_yaw = np.empty(len(self.maneuverable_waypoints), dtype=np.float64)
+
         for i, current_wp in enumerate(self.maneuverable_waypoints):
-            next_wp = self.maneuverable_waypoints[
-                (i + 1) % len(self.maneuverable_waypoints)
-            ]
+            next_wp = self.maneuverable_waypoints[(i + 1) % len(self.maneuverable_waypoints)]
             dx = next_wp.location[0] - current_wp.location[0]
             dy = next_wp.location[1] - current_wp.location[1]
             self.path_yaw[i] = np.arctan2(dy, dx)
@@ -208,20 +194,15 @@ class CustomEnv(Env):
         return (end_idx - start_idx) % n
 
     def _section_length(self):
-        return self._forward_distance(
-            self.section_start_index,
-            self.section_end_index,
-        )
+        return self._forward_distance(self.section_start_index, self.section_end_index)
 
     def calculate_section_progress(self):
         total = self._section_length()
         if total == 0:
             return 1.0
 
-        progressed = self._forward_distance(
-            self.section_start_index,
-            self.current_waypoint_index,
-        )
+        progressed = self._forward_distance(self.section_start_index, self.current_waypoint_index)
+
         return float(np.clip(progressed / total, 0.0, 1.0))
 
     def calculate_new_section_progress(self):
@@ -258,10 +239,7 @@ class CustomEnv(Env):
 
     def _waypoints_until_section_end(self):
         n = len(self.maneuverable_waypoints)
-        remaining = self._forward_distance(
-            self.current_waypoint_index,
-            self.section_end_index,
-        )
+        remaining = self._forward_distance(self.current_waypoint_index, self.section_end_index)
         if remaining == 0:
             return []
 
@@ -283,9 +261,7 @@ class CustomEnv(Env):
         if self.previous_yaw is None:
             yaw_rate = 0.0
         else:
-            yaw_change = self.normalize_angle(
-                current_yaw - self.previous_yaw
-            )
+            yaw_change = self.normalize_angle(current_yaw - self.previous_yaw)
             yaw_rate = yaw_change / 0.05
 
         self.previous_yaw = current_yaw
@@ -293,27 +269,13 @@ class CustomEnv(Env):
 
         path_yaw = self.path_yaw[self.current_waypoint_index]
         heading_error = self.normalize_angle(path_yaw - current_yaw)
-        observation[1] = np.clip(
-            heading_error / np.pi,
-            -1.0,
-            1.0,
-        )
+        observation[1] = np.clip(heading_error / np.pi, -1.0, 1.0)
 
         speed_kmh = np.linalg.norm(vehicle_velocity) * 3.6
-        observation[2] = np.clip(
-            speed_kmh / 60.0,
-            -1.0,
-            1.0,
-        )
+        observation[2] = np.clip(speed_kmh / 60.0, -1.0, 1.0)
 
-        previous_wp = self.maneuverable_waypoints[
-            (self.current_waypoint_index - 1)
-            % len(self.maneuverable_waypoints)
-        ].location
-        next_wp = self.maneuverable_waypoints[
-            (self.current_waypoint_index + 1)
-            % len(self.maneuverable_waypoints)
-        ].location
+        previous_wp = self.maneuverable_waypoints[(self.current_waypoint_index - 1) % len(self.maneuverable_waypoints)].location
+        next_wp = self.maneuverable_waypoints[(self.current_waypoint_index + 1) % len(self.maneuverable_waypoints)].location
 
         path = next_wp - previous_wp
         path_norm = np.sqrt(path[0] ** 2 + path[1] ** 2)
@@ -321,26 +283,15 @@ class CustomEnv(Env):
         if path_norm < 1e-8:
             lateral_error = 0.0
         else:
-            lateral_error = (
-                path[1] * vehicle_location[0]
-                - path[0] * vehicle_location[1]
-                + next_wp[0] * previous_wp[1]
-                - next_wp[1] * previous_wp[0]
-            ) / path_norm
+            lateral_error = (path[1] * vehicle_location[0] - path[0] * vehicle_location[1] + next_wp[0] * previous_wp[1] - next_wp[1] * previous_wp[0]) / path_norm
 
-        observation[3] = np.clip(
-            lateral_error / 3.0,
-            -1.0,
-            1.0,
-        )
+        observation[3] = np.clip(lateral_error / 3.0, -1.0, 1.0)
 
         x_offsets = []
         y_offsets = []
 
         for i in range(1, 41):
-            idx = (
-                self.current_waypoint_index + i * 5
-            ) % len(self.maneuverable_waypoints)
+            idx = (self.current_waypoint_index + i * 5) % len(self.maneuverable_waypoints)
 
             waypoint = self.maneuverable_waypoints[idx]
             dx = waypoint.location[0] - vehicle_location[0]
@@ -348,9 +299,7 @@ class CustomEnv(Env):
 
             distance = np.sqrt(dx ** 2 + dy ** 2)
             global_angle = np.arctan2(dy, dx)
-            local_angle = self.normalize_angle(
-                global_angle - current_yaw
-            )
+            local_angle = self.normalize_angle(global_angle - current_yaw)
 
             x_offsets.append(
                 np.clip(
@@ -377,12 +326,7 @@ class CustomEnv(Env):
     def step(self, action):
         action = np.asarray(action, dtype=np.float32)
 
-        lookahead_distance = (
-            (action[0] + 1.0)
-            / 2.0
-            * (self.max_lookahead - self.min_lookahead)
-            + self.min_lookahead
-        )
+        lookahead_distance = (action[0] + 1.0) / 2.0 * (self.max_lookahead - self.min_lookahead) + self.min_lookahead
         lateral_offset = action[1] * self.max_offset_meters
 
         total_progress = 0.0
@@ -392,18 +336,10 @@ class CustomEnv(Env):
         ticks_executed = 0
 
         for _ in range(self.tick_repeat):
-            vehicle_location = (
-                self.location_sensor.get_last_gym_observation()
-            )
-            vehicle_rotation = (
-                self.rpy_sensor.get_last_gym_observation()
-            )
-            vehicle_velocity = (
-                self.velocity_sensor.get_last_gym_observation()
-            )
-            current_speed_kmh = (
-                np.linalg.norm(vehicle_velocity) * 3.6
-            )
+            vehicle_location = self.location_sensor.get_last_gym_observation()
+            vehicle_rotation = self.rpy_sensor.get_last_gym_observation()
+            vehicle_velocity = self.velocity_sensor.get_last_gym_observation()
+            current_speed_kmh = np.linalg.norm(vehicle_velocity) * 3.6
 
             waypoints_to_shift = self._waypoints_until_section_end()
             if not waypoints_to_shift:
@@ -416,10 +352,7 @@ class CustomEnv(Env):
                 waypoints_to_shift,
             )
 
-            target_local_idx = min(
-                max(int(lookahead_distance) - 1, 0),
-                len(future_waypoints) - 1,
-            )
+            target_local_idx = min(max(int(lookahead_distance) - 1, 0), len(future_waypoints) - 1)
             modified_wp = future_waypoints[target_local_idx]
 
             steer_control, _ = self.lat_controller.run(
@@ -437,15 +370,9 @@ class CustomEnv(Env):
                 future_waypoints,
             )
 
-            steer_multiplier = round(
-                (current_speed_kmh + 0.001) / 120,
-                3,
-            )
-            steer_value = np.clip(
-                steer_control * steer_multiplier,
-                -1,
-                1,
-            )
+            steer_multiplier = round((current_speed_kmh + 0.001) / 120, 3)
+
+            steer_value = np.clip(steer_control * steer_multiplier, -1, 1)
 
             control = {
                 "throttle": np.clip(throttle, 0, 1),
@@ -467,9 +394,8 @@ class CustomEnv(Env):
             if self.enable_visualization:
                 self.render_camera()
 
-            vehicle_location = (
-                self.location_sensor.get_last_gym_observation()
-            )
+            vehicle_location = self.location_sensor.get_last_gym_observation()
+
             self.current_waypoint_index = filter_waypoints(
                 vehicle_location,
                 self.current_waypoint_index,
@@ -478,11 +404,8 @@ class CustomEnv(Env):
 
             total_progress += self.calculate_new_section_progress()
 
-            collision_impulse = np.linalg.norm(
-                self.collision_sensor
-                .get_last_observation()
-                .impulse_normal
-            )
+            collision_impulse = np.linalg.norm(self.collision_sensor.get_last_observation().impulse_normal)
+
             if collision_impulse > self.collision_threshold:
                 crashed = True
                 collision = 1.0
@@ -492,22 +415,13 @@ class CustomEnv(Env):
                 completed = True
                 break
 
-        reward = (
-            total_progress * self._section_length()
-            - collision * self.collision_penalty
-            - 0.01 * ticks_executed
-            - 0.01
-            * float(np.sum((self.previous_action - action) ** 2))
-        )
+        reward = total_progress * self._section_length() - collision * self.collision_penalty - 0.01 * ticks_executed - 0.01 * float(np.sum((self.previous_action - action) ** 2))
 
         self.previous_action = action.copy()
         self.previous_observation = self.get_observation()
         self.episode_steps += 1
 
-        section_time = (
-            self.world.last_tick_elapsed_seconds
-            - self.section_start_time
-        )
+        section_time = self.world.last_tick_elapsed_seconds - self.section_start_time
 
         terminated = False
         truncated = False
@@ -520,10 +434,7 @@ class CustomEnv(Env):
             terminated = True
             reason = "Completed Section"
             reward += 100.0
-            if (
-                self.time_to_beat > 0
-                and section_time <= self.time_to_beat
-            ):
+            if self.time_to_beat > 0 and section_time <= self.time_to_beat:
                 reward += 50.0
         elif self.episode_steps >= self.max_episode_steps:
             truncated = True
@@ -537,13 +448,7 @@ class CustomEnv(Env):
             "completed": completed,
         }
 
-        return (
-            self.previous_observation,
-            float(reward),
-            terminated,
-            truncated,
-            info,
-        )
+        return self.previous_observation, float(reward), terminated, truncated, info
 
     async def next_world_step(self, control):
         await self.vehicle.apply_action(control)
@@ -551,17 +456,9 @@ class CustomEnv(Env):
         await self.vehicle.receive_observation()
 
     def get_lateral_error(self):
-        vehicle_location = (
-            self.location_sensor.get_last_gym_observation()
-        )
-        previous_wp = self.maneuverable_waypoints[
-            (self.current_waypoint_index - 1)
-            % len(self.maneuverable_waypoints)
-        ].location
-        next_wp = self.maneuverable_waypoints[
-            (self.current_waypoint_index + 1)
-            % len(self.maneuverable_waypoints)
-        ].location
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        previous_wp = self.maneuverable_waypoints[(self.current_waypoint_index - 1) % len(self.maneuverable_waypoints)].location
+        next_wp = self.maneuverable_waypoints[(self.current_waypoint_index + 1) % len(self.maneuverable_waypoints)].location
 
         path = next_wp - previous_wp
         path_norm = np.sqrt(path[0] ** 2 + path[1] ** 2)
@@ -569,68 +466,36 @@ class CustomEnv(Env):
         if path_norm < 1e-8:
             return 0.0
 
-        return (
-            path[1] * vehicle_location[0]
-            - path[0] * vehicle_location[1]
-            + next_wp[0] * previous_wp[1]
-            - next_wp[1] * previous_wp[0]
-        ) / path_norm
+        return (path[1] * vehicle_location[0] - path[0] * vehicle_location[1] + next_wp[0] * previous_wp[1] - next_wp[1] * previous_wp[0]) / path_norm
 
-    def shift_waypoint_path(
-        self,
-        shift_amount,
-        lookahead_distance,
-        waypoints_to_shift,
-    ):
+    def shift_waypoint_path(self, shift_amount, lookahead_distance, waypoints_to_shift):
         shifted_waypoints = copy.deepcopy(waypoints_to_shift)
-        before_len = min(
-            int(lookahead_distance),
-            len(shifted_waypoints),
-        )
+        before_len = min(int(lookahead_distance), len(shifted_waypoints))
         current_offset = self.get_lateral_error()
 
         for i, wp in enumerate(shifted_waypoints):
-            track_idx = (
-                self.current_waypoint_index + 1 + i
-            ) % len(self.maneuverable_waypoints)
+            track_idx = (self.current_waypoint_index + 1 + i) % len(self.maneuverable_waypoints)
 
-            prev_wp = self.maneuverable_waypoints[
-                (track_idx - 1) % len(self.maneuverable_waypoints)
-            ]
-            next_wp = self.maneuverable_waypoints[
-                (track_idx + 1) % len(self.maneuverable_waypoints)
-            ]
+            prev_wp = self.maneuverable_waypoints[(track_idx - 1) % len(self.maneuverable_waypoints)]
+            next_wp = self.maneuverable_waypoints[(track_idx + 1) % len(self.maneuverable_waypoints)]
 
             path = next_wp.location - prev_wp.location
             angle = np.arctan2(path[1], path[0])
-            perpendicular_angle = (
-                self.normalize_angle(angle) + np.pi / 2.0
-            )
+            perpendicular_angle = (self.normalize_angle(angle) + np.pi / 2.0)
 
             if i < before_len:
                 fraction = i / max(before_len - 1, 1)
-                smoothstep = (
-                    3 * fraction ** 2 - 2 * fraction ** 3
-                )
-                shift = (
-                    current_offset
-                    + (shift_amount - current_offset) * smoothstep
-                )
+                smoothstep = (3 * fraction ** 2 - 2 * fraction ** 3)
+                shift = current_offset + (shift_amount - current_offset) * smoothstep
             else:
                 after_len = len(shifted_waypoints) - before_len
                 j = i - before_len
                 fraction = j / max(after_len - 1, 1)
-                smoothstep = (
-                    3 * fraction ** 2 - 2 * fraction ** 3
-                )
+                smoothstep = 3 * fraction ** 2 - 2 * fraction ** 3
                 shift = shift_amount * (1.0 - smoothstep)
 
-            wp.location[0] += (
-                shift * np.cos(perpendicular_angle)
-            )
-            wp.location[1] += (
-                shift * np.sin(perpendicular_angle)
-            )
+            wp.location[0] += shift * np.cos(perpendicular_angle)
+            wp.location[1] += shift * np.sin(perpendicular_angle)
 
         return shifted_waypoints
 
@@ -648,9 +513,7 @@ class CustomEnv(Env):
         self.previous_yaw = None
         self.old_progress = self.calculate_section_progress()
 
-        self.section_start_time = (
-            self.world.last_tick_elapsed_seconds
-        )
+        self.section_start_time = self.world.last_tick_elapsed_seconds
 
         observation = self.get_observation()
         return observation, {}
@@ -658,9 +521,6 @@ class CustomEnv(Env):
     async def reset_async(self):
         max_baseline_retries = 5
 
-        # ------------------------------------------------------------
-        # Load recorded baseline states
-        # ------------------------------------------------------------
         with open("baseline_states.json", "r") as f:
             baseline_states = json.load(f)
 
@@ -675,10 +535,6 @@ class CustomEnv(Env):
         spawn_state = baseline_states[spawn_key]
 
         for attempt in range(max_baseline_retries):
-
-            # --------------------------------------------------------
-            # 1. Remove previous vehicle
-            # --------------------------------------------------------
             if self.vehicle is not None:
                 self.vehicle.close()
                 self.vehicle = None
@@ -691,13 +547,9 @@ class CustomEnv(Env):
             self.collision_sensor = None
             self.vehicle_wrapper = None
 
-            # Allow CARLA to remove old actor
             for _ in range(2):
                 await self.world.step()
 
-            # --------------------------------------------------------
-            # 2. Spawn a fresh vehicle at the SAFE competition spawn
-            # --------------------------------------------------------
             world_waypoints = self.world.maneuverable_waypoints
 
             self.vehicle = self.world.spawn_vehicle(
@@ -717,9 +569,6 @@ class CustomEnv(Env):
 
             vehicle = self.vehicle
 
-            # --------------------------------------------------------
-            # 3. Attach fresh sensors
-            # --------------------------------------------------------
             self.camera_sensor = vehicle.attach_camera_sensor(
                 roar_py_interface.RoarPyCameraSensorDataRGB,
                 np.array([
@@ -736,92 +585,25 @@ class CustomEnv(Env):
                 image_height=768,
             )
 
-            self.location_sensor = (
-                vehicle.attach_location_in_world_sensor()
-            )
+            self.location_sensor = vehicle.attach_location_in_world_sensor()
+            self.velocity_sensor = vehicle.attach_velocimeter_sensor()
+            self.rpy_sensor = vehicle.attach_roll_pitch_yaw_sensor()
+            self.occupancy_map_sensor = vehicle.attach_occupancy_map_sensor(50, 50, 2.0, 2.0)
+            self.collision_sensor = vehicle.attach_collision_sensor(np.zeros(3), np.zeros(3))
 
-            self.velocity_sensor = (
-                vehicle.attach_velocimeter_sensor()
-            )
+            self.vehicle_wrapper = RoarCompetitionAgentWrapper(vehicle)
 
-            self.rpy_sensor = (
-                vehicle.attach_roll_pitch_yaw_sensor()
-            )
-
-            self.occupancy_map_sensor = (
-                vehicle.attach_occupancy_map_sensor(
-                    50,
-                    50,
-                    2.0,
-                    2.0,
-                )
-            )
-
-            self.collision_sensor = (
-                vehicle.attach_collision_sensor(
-                    np.zeros(3),
-                    np.zeros(3),
-                )
-            )
-
-            self.vehicle_wrapper = (
-                RoarCompetitionAgentWrapper(vehicle)
-            )
-
-            # Let the fresh actor/sensors exist for a few ticks
             for _ in range(5):
                 await self.world.step()
 
-            # --------------------------------------------------------
-            # 4. Restore recorded physical baseline state
-            # --------------------------------------------------------
-            spawn_location = np.array(
-                spawn_state["location"],
-                dtype=np.float64,
-            )
+            spawn_location = np.array(spawn_state["location"], dtype=np.float64)
+            spawn_rpy = np.array(spawn_state["rpy"], dtype=np.float64)
+            spawn_velocity = np.array(spawn_state["linear_velocity"], dtype=np.float64)
 
-            spawn_rpy = np.array(
-                spawn_state["rpy"],
-                dtype=np.float64,
-            )
+            self.vehicle.set_transform(spawn_location, spawn_rpy)
+            self.vehicle.set_linear_3d_velocity(spawn_velocity)
+            self.vehicle.set_angular_velocity(np.zeros(3))
 
-            spawn_velocity = np.array(
-                spawn_state["linear_velocity"],
-                dtype=np.float64,
-            )
-
-            self.vehicle.set_transform(
-                spawn_location,
-                spawn_rpy,
-            )
-
-            self.vehicle.set_linear_3d_velocity(
-                spawn_velocity
-            )
-
-            # Angular velocity was not recorded.
-            self.vehicle.set_angular_velocity(
-                np.zeros(3)
-            )
-
-            # Restore the baseline control that was active at this
-            # waypoint. This is preferable to starting the moving
-            # vehicle with a completely neutral command.
-            # Put the car at the recorded baseline state
-            self.vehicle.set_transform(
-                spawn_location,
-                spawn_rpy,
-            )
-
-            self.vehicle.set_linear_3d_velocity(
-                spawn_velocity
-            )
-
-            self.vehicle.set_angular_velocity(
-                np.zeros(3)
-            )
-
-            # Neutral steering while CARLA accepts the teleport.
             neutral_control = {
                 "throttle": 0.0,
                 "steer": 0.0,
@@ -833,13 +615,9 @@ class CustomEnv(Env):
 
             await self.vehicle.apply_action(neutral_control)
 
-            # Only one synchronization tick
             await self.world.step()
             await self.vehicle.receive_observation()
 
-            # --------------------------------------------------------
-            # 5. Create fresh baseline controller
-            # --------------------------------------------------------
             baseline = RoarCompetitionSolution(
                 world_waypoints,
                 self.vehicle_wrapper,
@@ -852,98 +630,42 @@ class CustomEnv(Env):
             )
 
             await baseline.initialize()
+            baseline.disable_waypoint_line = True
 
-            # initialize() should locate the vehicle from its sensor
-            # position, but synchronize explicitly with the recorded
-            # waypoint since this is a deliberate mid-lap spawn.
-            baseline.current_waypoint_idx = (
-                self.spawn_waypoint_index
-            )
-
-            self.current_waypoint_index = (
-                self.spawn_waypoint_index
-            )
-
-            # initialize() always begins in section 0.
-            # Correct it for the mid-lap snapshot.
-            baseline.current_section = (
-                self._current_section_from_index(
-                    self.spawn_waypoint_index
-                )
-            )
-
-            baseline.previous_timing_section = (
-                baseline.current_section
-            )
+            baseline.current_waypoint_idx = self.spawn_waypoint_index
+            self.current_waypoint_index = self.spawn_waypoint_index
+            baseline.current_section = self._current_section_from_index(self.spawn_waypoint_index)
+            baseline.previous_timing_section = baseline.current_section
 
             await baseline.step()
             await self.world.step()
             await self.vehicle.receive_observation()
 
-            print(
-                f"SNAPSHOT RESPAWN | "
-                f"wp={self.spawn_waypoint_index} "
-                f"section={baseline.current_section} "
-                f"speed={spawn_state['speed_kmh']:.1f} km/h"
-            )
+            warmup_origin = self.spawn_waypoint_index
 
-            # --------------------------------------------------------
-            # 6. Baseline warm-up from snapshot to PPO section
-            # --------------------------------------------------------
-            warmup_origin = (
-                self.spawn_waypoint_index
-            )
-
-            warmup_target_distance = (
-                self._forward_distance(
-                    warmup_origin,
-                    self.section_start_index,
-                )
-            )
+            warmup_target_distance = self._forward_distance(warmup_origin, self.section_start_index)
 
             warmup_steps = 0
             max_warmup_steps = 1000
             warmup_failed = False
 
             while True:
-                current_distance = (
-                    self._forward_distance(
-                        warmup_origin,
-                        baseline.current_waypoint_idx,
-                    )
-                )
+                current_distance = self._forward_distance(warmup_origin, baseline.current_waypoint_idx)
 
-                if (
-                    current_distance
-                    >= warmup_target_distance
-                ):
+                if current_distance >= warmup_target_distance:
                     break
 
-                # Latest simulator state
                 await self.vehicle.receive_observation()
 
                 if self.enable_visualization:
-                    result = self.viewer.render(
-                        self.camera_sensor
-                        .get_last_observation()
-                    )
+                    result = self.viewer.render(self.camera_sensor.get_last_observation())
 
                     if result is None:
-                        raise RuntimeError(
-                            "Viewer was closed."
-                        )
+                        raise RuntimeError("Viewer was closed.")
 
-                # Collision check
-                collision_impulse = np.linalg.norm(
-                    self.collision_sensor
-                    .get_last_observation()
-                    .impulse_normal
-                )
+                collision_impulse = np.linalg.norm(self.collision_sensor.get_last_observation().impulse_normal)
 
-                if (
-                    collision_impulse
-                    > self.collision_threshold
-                ):
+                if collision_impulse > self.collision_threshold:
                     print(
                         f"Baseline warmup crashed on "
                         f"attempt {attempt + 1}/"
@@ -954,15 +676,10 @@ class CustomEnv(Env):
                     warmup_failed = True
                     break
 
-                # Exact baseline controller
                 await baseline.step()
-
-                # Advance simulator
                 await self.world.step()
 
-                self.current_waypoint_index = (
-                    baseline.current_waypoint_idx
-                )
+                self.current_waypoint_index = baseline.current_waypoint_idx
 
                 warmup_steps += 1
 
@@ -976,46 +693,25 @@ class CustomEnv(Env):
                     warmup_failed = True
                     break
 
-            # --------------------------------------------------------
-            # 7. Failed warm-up -> recreate from same snapshot
-            # --------------------------------------------------------
             if warmup_failed:
                 continue
 
-            # --------------------------------------------------------
-            # 8. Successful warm-up -> PPO takeover
-            # --------------------------------------------------------
             await self.vehicle.receive_observation()
 
-            vehicle_location = (
-                self.location_sensor
-                .get_last_gym_observation()
-            )
+            vehicle_location = self.location_sensor.get_last_gym_observation()
 
-            self.current_waypoint_index = (
-                filter_waypoints(
-                    vehicle_location,
-                    baseline.current_waypoint_idx,
-                    self.maneuverable_waypoints,
-                )
-            )
+            self.current_waypoint_index = filter_waypoints(vehicle_location, baseline.current_waypoint_idx, self.maneuverable_waypoints)
 
-            # Fresh PPO-side controller state
             self.lat_controller = LatController()
             self.speed_controller = ThrottleController()
 
             self.episode_steps = 0
 
-            self.previous_action = np.zeros(
-                2,
-                dtype=np.float32,
-            )
+            self.previous_action = np.zeros(2, dtype=np.float32)
 
             self.previous_yaw = None
 
-            self.old_progress = (
-                self.calculate_section_progress()
-            )
+            self.old_progress = self.calculate_section_progress()
 
             print(
                 f"Baseline warmup succeeded. "
@@ -1027,9 +723,6 @@ class CustomEnv(Env):
 
             return
 
-        # ------------------------------------------------------------
-        # All snapshot warm-up attempts failed
-        # ------------------------------------------------------------
         raise RuntimeError(
             f"Baseline failed to reach section start "
             f"after {max_baseline_retries} snapshot "
