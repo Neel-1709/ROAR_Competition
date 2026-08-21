@@ -167,6 +167,14 @@ class RoarCompetitionSolution:
         self.baseline_states = {}
         self.disable_waypoint_line = False
 
+        # Temporary section timing
+        self.timing_started = False
+        self.timing_finished = False
+        self.section_start_tick = None
+
+        self.TIMING_START_WP = 1744
+        self.TIMING_END_WP = 2200
+
     async def initialize(self) -> None:
         # NOTE waypoints are changed through this line
         self.maneuverable_waypoints = (
@@ -576,7 +584,39 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
             with open("observation_stats.json", "w") as f:
                 json.dump(data, f, indent=4)
             self.saved_stats = True
-                
+
+        idx = self.current_waypoint_idx
+
+        # Start only when we actually reach waypoint 1744
+        if (
+            not self.timing_started
+            and abs(idx - self.TIMING_START_WP) <= 2
+        ):
+            self.section_start_tick = self.num_ticks
+            self.timing_started = True
+
+        # Stop only when we actually reach waypoint 2200,
+        # and only after the timer has started
+        if (
+            self.timing_started
+            and not self.timing_finished
+            and abs(idx - self.TIMING_END_WP) <= 2
+        ):
+            elapsed_ticks = self.num_ticks - self.section_start_tick
+            elapsed = elapsed_ticks * 0.05
+
+            self.timing_finished = True
+
+            with open("section_time.json", "w") as f:
+                json.dump({
+                    "start_waypoint": self.TIMING_START_WP,
+                    "end_waypoint": self.TIMING_END_WP,
+                    "start_tick": self.section_start_tick,
+                    "end_tick": self.num_ticks,
+                    "elapsed_ticks": elapsed_ticks,
+                    "elapsed_seconds": round(elapsed, 3)
+                }, f, indent=4)
+                        
         return control
 
     def normalize_angle(self, angle):

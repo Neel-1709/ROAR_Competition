@@ -62,8 +62,8 @@ class CustomEnv(Env):
         self.max_episode_steps = 8000
         self.section_start_time = 0.0
 
-        self.collision_threshold = 100.0
-        self.collision_penalty = 200.0
+        self.collision_threshold = 50.0
+        self.collision_penalty = 150.0
         self.min_lookahead = 5.0
         self.max_lookahead = 40.0
         self.max_offset_meters = 2.0
@@ -362,12 +362,34 @@ class CustomEnv(Env):
                 self.current_waypoint_index,
             )
 
+            wp_len = len(self.maneuverable_waypoints)
+
+            THROTTLE_HORIZON = 300
+
+            throttle_waypoints = [
+                self.maneuverable_waypoints[
+                    (self.current_waypoint_index + i) % wp_len
+                ]
+                for i in range(1, THROTTLE_HORIZON + 1)
+            ]
+
+            additional_start = (
+                self.current_waypoint_index - 9
+            ) % wp_len
+
+            additional_waypoints = [
+                self.maneuverable_waypoints[
+                    (additional_start + i) % wp_len
+                ]
+                for i in range(THROTTLE_HORIZON)
+            ]
+
             throttle, brake, gear, _, _ = self.speed_controller.run(
-                future_waypoints,
+                throttle_waypoints,
                 vehicle_location,
                 current_speed_kmh,
                 self.section_number,
-                future_waypoints,
+                additional_waypoints,
             )
 
             steer_multiplier = round((current_speed_kmh + 0.001) / 120, 3)
@@ -415,7 +437,7 @@ class CustomEnv(Env):
                 completed = True
                 break
 
-        reward = total_progress * self._section_length() - collision * self.collision_penalty - 0.01 * ticks_executed - 0.01 * float(np.sum((self.previous_action - action) ** 2))
+        reward = 120 * total_progress - collision * self.collision_penalty - 0.05 * ticks_executed - 0.07 * float(np.sum((self.previous_action - action) ** 2))
 
         self.previous_action = action.copy()
         self.previous_observation = self.get_observation()
@@ -433,9 +455,9 @@ class CustomEnv(Env):
         elif completed:
             terminated = True
             reason = "Completed Section"
-            reward += 100.0
+            reward += 250.0
             if self.time_to_beat > 0 and section_time <= self.time_to_beat:
-                reward += 50.0
+                reward += 100.0
         elif self.episode_steps >= self.max_episode_steps:
             truncated = True
             reason = "Max episode steps reached"
