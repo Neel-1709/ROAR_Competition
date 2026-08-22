@@ -13,15 +13,15 @@ from environment import CustomEnv
 SECTION_NUMBER = 8
 
 SECTION_START_INDEX = 1744
-SECTION_END_INDEX = 2200
+SECTION_END_INDEX = 2359
 SPAWN_WAYPOINT_INDEX = SECTION_START_INDEX - 50
 
 TICK_REPEAT = 3
-TIME_TO_BEAT = 17.9
+TIME_TO_BEAT = 22.2
 
-TOTAL_TIMESTEPS = 200_000
+TOTAL_TIMESTEPS = 420_000
 LOAD_EXISTING_MODEL = True
-CHECKPOINT_FREQUENCY = 2_000
+CHECKPOINT_FREQUENCY = 10_000
 
 CARLA_HOST = "127.0.0.1"
 CARLA_PORT = 2000
@@ -48,6 +48,8 @@ CHECKPOINT_DIR = Path("checkpoints") / f"section_{SECTION_NUMBER}" / "sac"
 FINAL_MODEL_DIR = Path("models") / f"section_{SECTION_NUMBER}"
 FINAL_MODEL_PATH = FINAL_MODEL_DIR / f"sac_section_{SECTION_NUMBER}_final"
 LOG_DIR = Path("logs") / f"section_{SECTION_NUMBER}" / "SAC"
+
+CHECKPOINT_TO_LOAD = Path("checkpoints/Final_Models/sac_section_8_410000_steps_copy.zip")
 
 
 def get_latest_checkpoint():
@@ -109,37 +111,29 @@ def main():
 
     model = None
 
+
     try:
         print("Setting up environment...")
         env.setup()
 
         if LOAD_EXISTING_MODEL:
-            latest_checkpoint = get_latest_checkpoint()
-
-            if latest_checkpoint is None:
-                print("No SAC checkpoint found. Starting a new SAC model.")
-                model = create_new_model(env)
-                loaded_timesteps = 0
-            else:
-                print(f"Loading latest SAC checkpoint: {latest_checkpoint}")
-
-                model = SAC.load(
-                    str(latest_checkpoint),
-                    env=env,
-                    device="auto",
+            if not CHECKPOINT_TO_LOAD.exists():
+                raise FileNotFoundError(
+                    f"Checkpoint not found: {CHECKPOINT_TO_LOAD}"
                 )
 
-                replay_candidates = sorted(
-                    CHECKPOINT_DIR.glob("*_replay_buffer_*.pkl"),
-                    key=lambda p: p.stat().st_mtime,
-                )
+            print(f"Loading SAC checkpoint: {CHECKPOINT_TO_LOAD}")
 
-                if replay_candidates:
-                    latest_replay = replay_candidates[-1]
-                    print(f"Loading replay buffer: {latest_replay}")
-                    model.load_replay_buffer(str(latest_replay))
+            model = SAC.load(
+                str(CHECKPOINT_TO_LOAD),
+                env=env,
+                device="auto",
+            )
 
-                loaded_timesteps = int(model.num_timesteps)
+            loaded_timesteps = int(model.num_timesteps)
+
+            print(f"Loaded model at {loaded_timesteps} timesteps")
+
         else:
             model = create_new_model(env)
             loaded_timesteps = 0

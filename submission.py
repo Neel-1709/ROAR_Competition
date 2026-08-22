@@ -1,9 +1,6 @@
-"""
-Competition instructions:
-Please do not change anything else but fill out the to-do sections.
-"""
 
 from collections import deque
+import copy
 from functools import reduce
 import json
 import os
@@ -13,11 +10,11 @@ import numpy as np
 import roar_py_interface
 from LateralController import LatController
 from ThrottleController import ThrottleController
-from StanelyController import StanleyController
 from WaypointLine import WaypointLine
 from SectionStats import SectionStats
 import atexit
-import json
+from pathlib import Path
+from stable_baselines3 import SAC
 
 # from scipy.interpolate import interp1d
 
@@ -29,6 +26,25 @@ dbg_wpsToFollow = []
 dbg_str = []
 dbg_str2 = []
 dbg_steer = []
+
+# SAC deployment configuration. Baseline behavior is unchanged outside this range.
+SAC_TAKEOVER_WP = 1745
+SAC_PROGRESS_START_WP = 1744
+SAC_END_WP = 2359
+SAC_MAX_SAFE_STEER = 0.075
+SAC_MAX_SAFE_HEADING_ERROR = 0.055
+SAC_MAX_SAFE_LATERAL_ERROR = 0.55
+SAC_SECTION_NUMBER = 8
+SAC_ACTION_REPEAT = 3
+SAC_MIN_LOOKAHEAD = 5.0
+SAC_MAX_LOOKAHEAD = 40.0
+SAC_MAX_OFFSET_METERS = 1.8
+SAC_MODEL_PATH = (
+    Path(__file__).resolve().parent
+    / "checkpoints"
+    / "Final_Models"
+    / "sac_section_8_410000_steps_copy.zip"
+)
 
 
 def dist_to_waypoint(location, waypoint: roar_py_interface.RoarPyWaypoint):
@@ -134,46 +150,18 @@ class RoarCompetitionSolution:
         self.previous_brake = False
         self.s3_mult = 1
 
-        self.stanley_controller = StanleyController(k=0.05,wheel_base=2.5)
-
-
-        # RL Stats for observation normalization
-        self.max_yaw_rate = 0.0
-        self.max_heading_error = 0.0
-        self.max_speed = 0.0
-        self.max_lateral_error = 0.0
-        self.max_waypoint_x = 0.0
-        self.max_waypoint_y = 0.0
-        self.previous_yaw = None
-        self.stats = {
-            "max_yaw_rate": 0.0,
-            "max_heading_error": 0.0,
-            "max_speed": 0.0,
-            "max_lateral_error": 0.0,
-            "max_waypoint_x": 0.0,
-            "max_waypoint_y": 0.0,
-            "min_progress": 0.0
-        }
-        self.saved_stats = False
-
-        self.section_ticks = 0
-        self.timing_section = False
-
-        self.timing_section = None
-        self.section_ticks = 0
-        self.previous_timing_section = self.current_section
-        self.skip_initial_section = True
-
-        self.baseline_states = {}
-        self.disable_waypoint_line = False
-
-        # Temporary section timing
-        self.timing_started = False
-        self.timing_finished = False
-        self.section_start_tick = None
-
-        self.TIMING_START_WP = 1744
-        self.TIMING_END_WP = 2359
+        # SAC-only state. None of this is consulted by the original baseline path.
+        self.sac_model = None
+        self.sac_active = False
+        self.sac_previous_action = np.zeros(2, dtype=np.float32)
+        self.sac_previous_yaw = None
+        self.sac_cached_action = np.zeros(2, dtype=np.float32)
+        self.sac_ticks_remaining = 0
+        self.sac_path_yaw = None
+        self.sac_lat_controller = None
+        self.sac_throttle_controller = None
+        self.sac_disabled_for_race = False
+        self.last_route_waypoint_idx = None
 
     async def initialize(self) -> None:
         # NOTE waypoints are changed through this line
@@ -182,20 +170,6 @@ class RoarCompetitionSolution:
                 np.load(f"{os.path.dirname(__file__)}\\waypoints\\waypointsPrimary.npz")
             )[35:]
         )
-        self.path_yaw = []
-
-        for i in range(len(self.maneuverable_waypoints)):
-            current_wp = self.maneuverable_waypoints[i]
-            next_wp = self.maneuverable_waypoints[(i + 1) % len(self.maneuverable_waypoints)]
-
-            dx = next_wp.location[0] - current_wp.location[0]
-            dy = next_wp.location[1] - current_wp.location[1]
-            yaw = np.arctan2(dy, dx)
-            self.path_yaw.append(yaw)
-
-        self.path_yaw = np.array(self.path_yaw)
-
-
         self.section_stats = SectionStats(
             self.maneuverable_waypoints, self.location_sensor, self.velocity_sensor)
 
@@ -232,10 +206,67 @@ class RoarCompetitionSolution:
             vehicle_location, self.current_waypoint_idx, self.maneuverable_waypoints
         )
         self.previous_location = vehicle_location
-        self.old_progress = 0.0
+
+        # SAC inference setup. This does not alter any baseline controller/path state.
+        self.sac_path_yaw = np.empty(len(self.maneuverable_waypoints), dtype=np.float64)
+        for i, current_wp in enumerate(self.maneuverable_waypoints):
+            next_wp = self.maneuverable_waypoints[(i + 1) % len(self.maneuverable_waypoints)]
+            dx = next_wp.location[0] - current_wp.location[0]
+            dy = next_wp.location[1] - current_wp.location[1]
+            self.sac_path_yaw[i] = np.arctan2(dy, dx)
+
+        if not SAC_MODEL_PATH.exists():
+            raise FileNotFoundError(f"SAC model not found: {SAC_MODEL_PATH.resolve()}")
+        self.sac_model = SAC.load(str(SAC_MODEL_PATH), device="auto")
+        print(
+            f"[SAC] Loaded {SAC_MODEL_PATH.resolve()} "
+            f"timesteps={self.sac_model.num_timesteps}"
+        )
 
 
     async def step(self) -> None:
+        """Route to untouched baseline or SAC based on the current physical waypoint."""
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        candidate_idx = filter_waypoints(
+            vehicle_location, self.current_waypoint_idx, self.maneuverable_waypoints
+        )
+
+        # New lap: clear stale SAC inference state. A safety lockout, if triggered,
+        # intentionally remains active for the rest of the race.
+        if (
+            self.last_route_waypoint_idx is not None
+            and self.last_route_waypoint_idx > 2400
+            and candidate_idx < 200
+        ):
+            self.sac_active = False
+            self.sac_previous_action = np.zeros(2, dtype=np.float32)
+            self.sac_previous_yaw = None
+            self.sac_cached_action = np.zeros(2, dtype=np.float32)
+            self.sac_ticks_remaining = 0
+            self.sac_lat_controller = None
+            self.sac_throttle_controller = None
+
+        self.last_route_waypoint_idx = candidate_idx
+
+        should_use_sac = (
+            not self.sac_disabled_for_race
+            and SAC_TAKEOVER_WP <= candidate_idx < SAC_END_WP
+        )
+
+        if should_use_sac:
+            self.current_waypoint_idx = candidate_idx
+            if not self.sac_active:
+                self._enter_sac_mode()
+            return await self._sac_step()
+
+        if self.sac_active:
+            self.current_waypoint_idx = candidate_idx
+            self._exit_sac_mode()
+
+        # This is the original baseline step, unchanged.
+        return await self._baseline_step_original()
+
+    async def _baseline_step_original(self) -> None:
         """
         This function is called every world step.
         Note: You should not call receive_observation() on any sensor here, instead use get_last_observation() to get the last received observation.
@@ -268,16 +299,13 @@ class RoarCompetitionSolution:
         nextWaypointIndex = self.get_lookahead_index(current_speed_kmh)
         waypoint_to_follow = self.next_waypoint_smooth(current_speed_kmh, vehicle_location)
         waypoint_to_follow_location = waypoint_to_follow.location
-
-        if self.current_section not in [0, 9] and not self.disable_waypoint_line:
-            waypoint_to_follow_location = self.waypoint_line.get_next_waypoint_location(waypoint_to_follow.location)
+        snap_to_line_location = self.waypoint_line.get_next_waypoint_location(waypoint_to_follow.location)
+        if self.current_section  not in [0, 9]:
+            waypoint_to_follow_location = snap_to_line_location
 
         # Pure pursuit controller to steer the vehicle
         steer_control, steer_debug = self.lat_controller.run(
-            vehicle_location,
-            vehicle_rotation,
-            waypoint_to_follow_location,
-            self.current_waypoint_idx,
+            vehicle_location, vehicle_rotation, waypoint_to_follow_location, self.current_waypoint_idx
         )
 
         # Custom controller to control the vehicle's speed
@@ -310,6 +338,7 @@ class RoarCompetitionSolution:
                     self.previous_brake = True
             if current_speed_kmh < 160:
                 self.s3_mult = 0.75
+            print(f"spd {current_speed_kmh} mult{self.s3_mult} sec={self.current_section}")
         if self.current_waypoint_idx in [802, 803, 804]:
             self.previous_brake = False
 
@@ -319,28 +348,28 @@ class RoarCompetitionSolution:
             if self.current_waypoint_idx < 813:
                 steerMultiplier *= self.s3_mult
             elif self.current_waypoint_idx < 845:
-                steerMultiplier *= 1.45
+                steerMultiplier *= 1.42
             else:
                 steerMultiplier *= 1
                 self.s3_mult = 1
 
         if self.current_section == 4:
-            steerMultiplier = min(1.45, steerMultiplier * 1.65)
+            steerMultiplier *= 1.65
+            steerMultiplier = min(1.45, steerMultiplier)
         if self.current_section == 5:
             steerMultiplier *= 1.1
         if self.current_section in [6]:
-            steerMultiplier = np.clip(steerMultiplier * 3.2, 3.1, 7)
+            steerMultiplier = np.clip(steerMultiplier * 2.9, 2.8, 5.5)
         if self.current_section == 7:
-            steerMultiplier *= 1.75
+            steerMultiplier *= 1.68
 
         if self.current_section == 9:
             if self.current_waypoint_idx > 2580:
-                steerMultiplier = max(steerMultiplier, 1.7)
+                steerMultiplier = max(steerMultiplier, 1.62)
             else:
-                steerMultiplier = max(steerMultiplier, 1.5)
+                steerMultiplier = max(steerMultiplier, 1.47)
 
         steer_value = np.clip(steer_control * steerMultiplier, -1, 1)
-        
         # sec3
         if  820 < self.current_waypoint_idx < 837:
             steer_value = np.clip(steer_control * steerMultiplier, -0.007, 1)
@@ -351,19 +380,6 @@ class RoarCompetitionSolution:
               self.previous_brake = True
         if self.current_waypoint_idx in [2383, 2384, 2385]:
             self.previous_brake = False
-
-
-        # # Temporary final-corner entry speed limit
-        # FINAL_CORNER_BRAKE_START = 1780
-        # FINAL_CORNER_END = 1800
-        # FINAL_CORNER_TARGET_SPEED = 190.0  # km/h
-
-        # if FINAL_CORNER_BRAKE_START <= self.current_waypoint_idx <= FINAL_CORNER_END:
-        #     speed_error = current_speed_kmh - FINAL_CORNER_TARGET_SPEED
-
-        #     if speed_error > 0:
-        #         throttle = 0.0
-        #         brake = np.clip(speed_error / 20.0, 0.2, 1.0)
 
         control = {
             "throttle": np.clip(throttle, 0, 1),
@@ -425,211 +441,350 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
 # Steer: {control['steer']:.10f} \n"
 #                 )
 
-        # RL observation data collection(for normalized values)
+        await self.vehicle.apply_action(control)
+        return control
 
-        # Yaw Rate
-        vehicle_yaw = vehicle_rotation[2]
+    def _enter_sac_mode(self):
+        # SAC gets its own fresh low-level controllers, matching CustomEnv, while
+        # the original baseline controllers remain completely untouched.
+        self.sac_lat_controller = LatController()
+        self.sac_throttle_controller = ThrottleController()
+        self.sac_previous_action = np.zeros(2, dtype=np.float32)
+        self.sac_previous_yaw = None
+        self.sac_cached_action = np.zeros(2, dtype=np.float32)
+        self.sac_ticks_remaining = 0
+        self.sac_active = True
+        print(f"[SAC] TAKEOVER at waypoint {self.current_waypoint_idx}")
 
-        if self.previous_yaw is None:
+    def _exit_sac_mode(self):
+        # Baseline state has been shadow-updated during SAC, so do not reset any
+        # baseline controller or WaypointLine state here. Only clear SAC state.
+        self.sac_previous_action = np.zeros(2, dtype=np.float32)
+        self.sac_previous_yaw = None
+        self.sac_cached_action = np.zeros(2, dtype=np.float32)
+        self.sac_ticks_remaining = 0
+        self.sac_lat_controller = None
+        self.sac_throttle_controller = None
+        self.sac_active = False
+        print(f"[SAC] HANDOFF at waypoint {self.current_waypoint_idx}, baseline section={self.current_section}")
+
+    def _shadow_baseline_update(self, vehicle_location, vehicle_rotation, current_speed_kmh):
+        """Advance baseline internal state while SAC owns the actual control.
+
+        This intentionally mirrors the stateful parts of the original baseline step,
+        but does NOT apply the baseline control to the vehicle.
+        """
+        # Keep section/lap bookkeeping current across boundaries skipped by SAC.
+        for i, section_ind in enumerate(self.section_indeces):
+            if (
+                abs(self.current_waypoint_idx - section_ind) <= 2
+                and i != self.current_section
+            ):
+                self.current_section = i
+                if self.current_section == 0 and self.lapNum != 3:
+                    self.lapNum += 1
+
+        # Reproduce baseline target generation so WaypointLine advances exactly as
+        # it would in a normal baseline tick.
+        nextWaypointIndex = self.get_lookahead_index(current_speed_kmh)
+        waypoint_to_follow = self.next_waypoint_smooth(current_speed_kmh, vehicle_location)
+        waypoint_to_follow_location = waypoint_to_follow.location
+        snap_to_line_location = self.waypoint_line.get_next_waypoint_location(
+            waypoint_to_follow.location
+        )
+        if self.current_section not in [0, 9]:
+            waypoint_to_follow_location = snap_to_line_location
+
+        # Advance any internal lateral-controller history. Discard output.
+        self.lat_controller.run(
+            vehicle_location,
+            vehicle_rotation,
+            waypoint_to_follow_location,
+            self.current_waypoint_idx,
+        )
+
+        # Advance throttle-controller history using the original baseline horizon.
+        waypoints_for_throttle = (self.maneuverable_waypoints * 2)[
+            nextWaypointIndex : nextWaypointIndex + 300
+        ]
+        wp_len = len(self.maneuverable_waypoints)
+        wp_ind_for_throttle = (
+            (nextWaypointIndex + wp_len) - 9
+        ) % wp_len
+        additional_waypoints = (self.maneuverable_waypoints * 2)[
+            wp_ind_for_throttle : wp_ind_for_throttle + 300
+        ]
+        self.throttle_controller.run(
+            waypoints_for_throttle,
+            vehicle_location,
+            current_speed_kmh,
+            self.current_section,
+            additional_waypoints,
+        )
+
+    async def _sac_step(self):
+        # This is CustomEnv.step(action) split across competition-runner world ticks.
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        vehicle_rotation = self.rpy_sensor.get_last_gym_observation()
+        vehicle_velocity = self.velocity_sensor.get_last_gym_observation()
+        current_speed_kmh = np.linalg.norm(vehicle_velocity) * 3.6
+
+        self.current_waypoint_idx = filter_waypoints(
+            vehicle_location, self.current_waypoint_idx, self.maneuverable_waypoints
+        )
+
+        action = self._get_or_update_sac_action()
+        lookahead_distance = (
+            (action[0] + 1.0) / 2.0
+            * (SAC_MAX_LOOKAHEAD - SAC_MIN_LOOKAHEAD)
+            + SAC_MIN_LOOKAHEAD
+        )
+        lateral_offset = action[1] * SAC_MAX_OFFSET_METERS
+
+        waypoints_to_shift = self._sac_waypoints_until_end()
+        if not waypoints_to_shift:
+            # The runner can skip directly to the handoff boundary between ticks.
+            self._exit_sac_mode()
+            return await self._baseline_step_original()
+
+        future_waypoints = self._sac_shift_waypoint_path(
+            lateral_offset, lookahead_distance, waypoints_to_shift
+        )
+        target_local_idx = min(
+            max(int(lookahead_distance) - 1, 0), len(future_waypoints) - 1
+        )
+        modified_wp = future_waypoints[target_local_idx]
+
+        steer_control, _ = self.sac_lat_controller.run(
+            vehicle_location,
+            vehicle_rotation,
+            modified_wp.location,
+            self.current_waypoint_idx,
+        )
+
+        wp_len = len(self.maneuverable_waypoints)
+        throttle_horizon = 300
+        throttle_waypoints = [
+            self.maneuverable_waypoints[(self.current_waypoint_idx + i) % wp_len]
+            for i in range(1, throttle_horizon + 1)
+        ]
+        additional_start = (self.current_waypoint_idx - 9) % wp_len
+        additional_waypoints = [
+            self.maneuverable_waypoints[(additional_start + i) % wp_len]
+            for i in range(throttle_horizon)
+        ]
+
+        throttle, brake, gear, _, _ = self.sac_throttle_controller.run(
+            throttle_waypoints,
+            vehicle_location,
+            current_speed_kmh,
+            SAC_SECTION_NUMBER,
+            additional_waypoints,
+        )
+
+        steer_multiplier = round((current_speed_kmh + 0.001) / 120, 3)
+        steer_value = float(np.clip(steer_control * steer_multiplier, -1, 1))
+
+        # Safety shield: do not blend or modify SAC. If its raw training-time
+        # control is already outside the envelope that succeeded in evaluation,
+        # hand the remainder of the race back to the known-good baseline.
+        current_yaw = float(vehicle_rotation[2])
+        path_yaw = float(self.sac_path_yaw[self.current_waypoint_idx])
+        heading_error = self._sac_normalize_angle(path_yaw - current_yaw)
+        lateral_error = float(self._sac_get_lateral_error())
+
+        unsafe_sac = (
+            not np.isfinite(steer_value)
+            or abs(steer_value) > SAC_MAX_SAFE_STEER
+            or abs(heading_error) > SAC_MAX_SAFE_HEADING_ERROR
+            or abs(lateral_error) > SAC_MAX_SAFE_LATERAL_ERROR
+        )
+
+        if unsafe_sac:
+            print(
+                f"[SAC] SAFETY FALLBACK at wp={self.current_waypoint_idx} "
+                f"steer={steer_value:.4f} heading={heading_error:.4f} "
+                f"lat={lateral_error:.3f}"
+            )
+            self.sac_disabled_for_race = True
+            self._exit_sac_mode()
+            # _exit_sac_mode clears SAC state only. The original baseline then
+            # computes and applies this tick's control exactly as before.
+            return await self._baseline_step_original()
+
+        # This tick will actually be controlled by SAC. Count it once and keep
+        # baseline state synchronized in shadow mode.
+        self.num_ticks += 1
+        self.section_stats.step()
+
+        # Only shadow-update baseline state on ticks where SAC will actually own
+        # the vehicle. This keeps handoff state current without double-updating
+        # a baseline fallback tick.
+        self._shadow_baseline_update(
+            vehicle_location, vehicle_rotation, current_speed_kmh
+        )
+
+        control = {
+            "throttle": np.clip(throttle, 0, 1),
+            "steer": steer_value,
+            "brake": np.clip(brake, 0, 1),
+            "hand_brake": 0,
+            "reverse": 0,
+            "target_gear": gear,
+        }
+        await self.vehicle.apply_action(control)
+        return control
+
+    def _get_or_update_sac_action(self):
+        if self.sac_ticks_remaining <= 0:
+            observation = self._get_sac_observation()
+            action, _ = self.sac_model.predict(observation, deterministic=True)
+            action = np.asarray(action, dtype=np.float32).reshape(-1)
+            if action.shape != (2,):
+                raise RuntimeError(f"Expected SAC action shape (2,), got {action.shape}")
+            action = np.clip(action, -1.0, 1.0)
+            self.sac_cached_action = action.copy()
+            # Training's next observation contains the action that just controlled
+            # the preceding three world ticks.
+            self.sac_previous_action = action.copy()
+            self.sac_ticks_remaining = SAC_ACTION_REPEAT
+
+        action = self.sac_cached_action.copy()
+        self.sac_ticks_remaining -= 1
+        return action
+
+    def _get_sac_observation(self):
+        # Mathematical copy of CustomEnv.get_observation().
+        observation = np.empty((87,), dtype=np.float32)
+        vehicle_rpy = self.rpy_sensor.get_last_gym_observation()
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        vehicle_velocity = self.velocity_sensor.get_last_gym_observation()
+
+        current_yaw = vehicle_rpy[2]
+        if self.sac_previous_yaw is None:
             yaw_rate = 0.0
         else:
-            yaw_change = vehicle_yaw - self.previous_yaw
-            yaw_change = self.normalize_angle(yaw_change)
+            yaw_change = self._sac_normalize_angle(current_yaw - self.sac_previous_yaw)
             yaw_rate = yaw_change / 0.05
+        self.sac_previous_yaw = current_yaw
+        observation[0] = np.clip(yaw_rate / 65.0, -1.0, 1.0)
 
-        self.previous_yaw = vehicle_yaw
+        path_yaw = self.sac_path_yaw[self.current_waypoint_idx]
+        heading_error = self._sac_normalize_angle(path_yaw - current_yaw)
+        observation[1] = np.clip(heading_error / np.pi, -1.0, 1.0)
 
-        self.max_yaw_rate = max(self.max_yaw_rate, abs(yaw_rate))
+        speed_kmh = np.linalg.norm(vehicle_velocity) * 3.6
+        observation[2] = np.clip(speed_kmh / 60.0, -1.0, 1.0)
 
-        # Heading Error
-        path_yaw = self.path_yaw[self.current_waypoint_idx]
-
-        heading_error = path_yaw - vehicle_yaw
-        heading_error = self.normalize_angle(heading_error)
-
-        self.max_heading_error = max(self.max_heading_error, abs(heading_error))
-
-        # Max Speed
-        self.max_speed = max(self.max_speed, current_speed_kmh)
-
-        # Lateral Error
-        vehicle_location = self.location_sensor.get_last_gym_observation()
-        previous_wp = self.maneuverable_waypoints[self.current_waypoint_idx - 1].location
-        next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + 1) % len(self.maneuverable_waypoints)].location
+        n = len(self.maneuverable_waypoints)
+        previous_wp = self.maneuverable_waypoints[(self.current_waypoint_idx - 1) % n].location
+        next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + 1) % n].location
         path = next_wp - previous_wp
+        path_norm = np.sqrt(path[0] ** 2 + path[1] ** 2)
+        if path_norm < 1e-8:
+            lateral_error = 0.0
+        else:
+            lateral_error = (
+                path[1] * vehicle_location[0]
+                - path[0] * vehicle_location[1]
+                + next_wp[0] * previous_wp[1]
+                - next_wp[1] * previous_wp[0]
+            ) / path_norm
+        observation[3] = np.clip(lateral_error / 3.0, -1.0, 1.0)
 
-        lateral_error = (path[1]*vehicle_location[0] - path[0]*vehicle_location[1] + next_wp[0]*previous_wp[1] - next_wp[1]*previous_wp[0]) / np.sqrt((path[0]**2 + path[1]**2))
-        self.max_lateral_error = max(self.max_lateral_error, abs(lateral_error))
-
-        # Max x and y offsets of future waypoints
-        for i in range(1,41):
-            idx = (self.current_waypoint_idx + i * 5) % len(self.maneuverable_waypoints)
-
+        x_offsets = []
+        y_offsets = []
+        for i in range(1, 41):
+            idx = (self.current_waypoint_idx + i * 5) % n
             waypoint = self.maneuverable_waypoints[idx]
             dx = waypoint.location[0] - vehicle_location[0]
             dy = waypoint.location[1] - vehicle_location[1]
+            distance = np.sqrt(dx ** 2 + dy ** 2)
+            global_angle = np.arctan2(dy, dx)
+            local_angle = self._sac_normalize_angle(global_angle - current_yaw)
+            x_offsets.append(np.clip(distance * np.cos(local_angle) / 400.0, -1.0, 1.0))
+            y_offsets.append(np.clip(distance * np.sin(local_angle) / 300.0, -1.0, 1.0))
 
-            distance = np.sqrt(dx**2 + dy**2)
-            global_angle_to_wp = np.arctan2(dy, dx)
-            local_angle_to_wp = global_angle_to_wp - vehicle_yaw
+        observation[4:44] = x_offsets
+        observation[44:84] = y_offsets
+        observation[84] = self._sac_section_progress()
+        observation[85:87] = self.sac_previous_action
+        return observation
 
-            normalized_relative_angle = self.normalize_angle(local_angle_to_wp)
+    def _sac_normalize_angle(self, angle):
+        return (angle + np.pi) % (2.0 * np.pi) - np.pi
 
-            x_offset = distance * np.cos(normalized_relative_angle)
-            y_offset = distance * np.sin(normalized_relative_angle)
+    def _sac_forward_distance(self, start_idx, end_idx):
+        return (end_idx - start_idx) % len(self.maneuverable_waypoints)
 
-            self.max_waypoint_x = np.max([self.max_waypoint_x, abs(x_offset)])
-            self.max_waypoint_y = np.max([self.max_waypoint_y, abs(y_offset)])
+    def _sac_section_progress(self):
+        total = self._sac_forward_distance(SAC_PROGRESS_START_WP, SAC_END_WP)
+        if total == 0:
+            return 1.0
+        progressed = self._sac_forward_distance(SAC_PROGRESS_START_WP, self.current_waypoint_idx)
+        return float(np.clip(progressed / total, 0.0, 1.0))
 
-        self.stats['max_yaw_rate'] = np.max([self.stats['max_yaw_rate'], self.max_yaw_rate])
-        self.stats['max_heading_error'] = np.max([self.stats['max_heading_error'], self.max_heading_error])
-        self.stats['max_speed'] = np.max([self.stats['max_speed'], self.max_speed])
-        self.stats['max_lateral_error'] = np.max([self.stats['max_lateral_error'], self.max_lateral_error])
-        self.stats['max_waypoint_x'] = np.max([self.stats['max_waypoint_x'], self.max_waypoint_x])
-        self.stats['max_waypoint_y'] = np.max([self.stats['max_waypoint_y'], self.max_waypoint_y])
-        
-        # ============================================================
-        # SECTION TIMING
-        # ============================================================
+    def _sac_waypoints_until_end(self):
+        n = len(self.maneuverable_waypoints)
+        remaining = self._sac_forward_distance(self.current_waypoint_idx, SAC_END_WP)
+        if remaining == 0:
+            return []
+        return copy.deepcopy([
+            self.maneuverable_waypoints[(self.current_waypoint_idx + i) % n]
+            for i in range(1, remaining + 1)
+        ])
 
-        # Detect entering a new section
-        if self.current_section != self.previous_timing_section:
+    def _sac_get_lateral_error(self):
+        vehicle_location = self.location_sensor.get_last_gym_observation()
+        n = len(self.maneuverable_waypoints)
+        previous_wp = self.maneuverable_waypoints[(self.current_waypoint_idx - 1) % n].location
+        next_wp = self.maneuverable_waypoints[(self.current_waypoint_idx + 1) % n].location
+        path = next_wp - previous_wp
+        path_norm = np.sqrt(path[0] ** 2 + path[1] ** 2)
+        if path_norm < 1e-8:
+            return 0.0
+        return (
+            path[1] * vehicle_location[0]
+            - path[0] * vehicle_location[1]
+            + next_wp[0] * previous_wp[1]
+            - next_wp[1] * previous_wp[0]
+        ) / path_norm
 
-            # --------------------------------------------------------
-            # Finish timing the section we just left
-            # --------------------------------------------------------
-            if self.timing_section is not None:
-                section_time = self.section_ticks * 0.05
+    def _sac_shift_waypoint_path(self, shift_amount, lookahead_distance, waypoints_to_shift):
+        # Exact copy of the training environment's shift_waypoint_path().
+        shifted_waypoints = copy.deepcopy(waypoints_to_shift)
+        before_len = min(int(lookahead_distance), len(shifted_waypoints))
+        current_offset = self._sac_get_lateral_error()
 
-                record = {
-                    "lap": self.lapNum,
-                    "section": self.timing_section,
-                    "time": round(section_time, 3),
-                }
+        for i, wp in enumerate(shifted_waypoints):
+            track_idx = (self.current_waypoint_idx + 1 + i) % len(self.maneuverable_waypoints)
+            prev_wp = self.maneuverable_waypoints[(track_idx - 1) % len(self.maneuverable_waypoints)]
+            next_wp = self.maneuverable_waypoints[(track_idx + 1) % len(self.maneuverable_waypoints)]
+            path = next_wp.location - prev_wp.location
+            angle = np.arctan2(path[1], path[0])
+            perpendicular_angle = self._sac_normalize_angle(angle) + np.pi / 2.0
 
-                print(
-                    f"LAP {self.lapNum} "
-                    f"SECTION {self.timing_section} "
-                    f"TIME: {section_time:.3f} seconds"
-                )
-
-                filename = "section_times.json"
-
-                if os.path.exists(filename):
-                    with open(filename, "r") as f:
-                        try:
-                            data = json.load(f)
-                        except json.JSONDecodeError:
-                            data = []
-                else:
-                    data = []
-
-                data.append(record)
-
-                with open(filename, "w") as f:
-                    json.dump(data, f, indent=4)
-
-            # --------------------------------------------------------
-            # We started the race already inside a section and from
-            # rest, so do NOT record that first partial section.
-            # Once we cross the first boundary, normal timing begins.
-            # --------------------------------------------------------
-            if self.skip_initial_section:
-                self.skip_initial_section = False
-
-            # Start timing the NEW section
-            self.timing_section = self.current_section
-            self.section_ticks = 0
-
-            self.previous_timing_section = self.current_section
-
-
-        # Count only ticks belonging to the current timed section
-        if self.timing_section is not None:
-            self.section_ticks += 1
-        await self.vehicle.apply_action(control)
-
-        idx = self.current_waypoint_idx
-
-        state = {
-            "waypoint index": int(idx),
-            "location": self.location_sensor.get_last_gym_observation().tolist(),
-            "rpy": self.rpy_sensor.get_last_gym_observation().tolist(),
-            "linear_velocity": self.velocity_sensor.get_last_gym_observation().tolist(),
-            "speed_kmh": float(current_speed_kmh),
-            "control": {
-                "throttle": float(control["throttle"]),
-                "steer": float(control["steer"]),
-                "brake": float(control["brake"]),
-                "hand_brake": int(control["hand_brake"]),
-                "reverse": int(control["reverse"]),
-                "target_gear": int(control["target_gear"]),
-            },
-        }
-
-        self.baseline_states[str(idx)] = state
-
-        # with open("baseline_states.json", "w") as f:
-        #         json.dump(self.baseline_states, f, indent=4)
-
-        if self.current_waypoint_idx == len(self.maneuverable_waypoints) - 1 and not self.saved_stats:
-            # Updating stats JSON file
-            if os.path.exists("observation_stats.json"):
-                with open("observation_stats.json", "r") as f:
-                    data = json.load(f)
-                    data.append(self.stats)
+            if i < before_len:
+                fraction = i / max(before_len - 1, 1)
+                smoothstep = 3 * fraction ** 2 - 2 * fraction ** 3
+                shift = current_offset + (shift_amount - current_offset) * smoothstep
             else:
-                data = [self.stats]
+                after_len = len(shifted_waypoints) - before_len
+                j = i - before_len
+                fraction = j / max(after_len - 1, 1)
+                smoothstep = 3 * fraction ** 2 - 2 * fraction ** 3
+                shift = shift_amount * (1.0 - smoothstep)
 
-            with open("observation_stats.json", "w") as f:
-                json.dump(data, f, indent=4)
-            self.saved_stats = True
+            wp.location[0] += shift * np.cos(perpendicular_angle)
+            wp.location[1] += shift * np.sin(perpendicular_angle)
 
-        idx = self.current_waypoint_idx
-
-        # Start only when we actually reach waypoint 1744
-        if (
-            not self.timing_started
-            and abs(idx - self.TIMING_START_WP) <= 2
-        ):
-            self.section_start_tick = self.num_ticks
-            self.timing_started = True
-
-        # Stop only when we actually reach waypoint 2200,
-        # and only after the timer has started
-        if (
-            self.timing_started
-            and not self.timing_finished
-            and abs(idx - self.TIMING_END_WP) <= 2
-        ):
-            elapsed_ticks = self.num_ticks - self.section_start_tick
-            elapsed = elapsed_ticks * 0.05
-
-            self.timing_finished = True
-
-            with open("section_time.json", "w") as f:
-                json.dump({
-                    "start_waypoint": self.TIMING_START_WP,
-                    "end_waypoint": self.TIMING_END_WP,
-                    "start_tick": self.section_start_tick,
-                    "end_tick": self.num_ticks,
-                    "elapsed_ticks": elapsed_ticks,
-                    "elapsed_seconds": round(elapsed, 3)
-                }, f, indent=4)
-                        
-        return control
-
-    def normalize_angle(self, angle):
-        # Formula for normalized angles: normalized_angle = (angle % 360 + 360) % 360 - 180
-        TAU = 2 * np.pi
-        return (angle % TAU + TAU) % TAU - np.pi
+        return shifted_waypoints
 
     def get_lookahead_value(self, speed):
         """
         Returns the number of waypoints to look ahead based on the speed the car is currently going
         """
         speed_to_lookahead_dict = {
-            80:7,
             90: 9,
             110: 11,
             130: 14,
@@ -682,24 +837,24 @@ loc: ({vehicle_location[0]:.2f}, {vehicle_location[1]:.2f}) wp({wpl[0]:.1f}, {wp
         """
         If the speed is higher than 70, 'smooth out' the path that the car will take
         """
-        if self.current_section == 3 and not self.disable_waypoint_line:
+        if self.current_section == 3:
             kdd = 0.25
             distance = kdd * current_speed
             distance = np.clip(distance, 44, 70)
             location, _ = self.waypoint_line.get_lookahead_location(vehicle_location, distance)
             point = roar_py_interface.RoarPyWaypoint(location, roll_pitch_yaw=np.ndarray([0, 0, 0]), lane_width=0.0)
             return point
-        if self.current_section in [5, 7] and not self.disable_waypoint_line:
+        if self.current_section in [5, 7]:
             kdd = 0.25
             distance = kdd * current_speed
             distance = np.clip(distance, 30, 70)
             location, _ = self.waypoint_line.get_lookahead_location(vehicle_location, distance)
             point = roar_py_interface.RoarPyWaypoint(location, roll_pitch_yaw=np.ndarray([0, 0, 0]), lane_width=0.0)
             return point
-        if self.current_section == 6 and not self.disable_waypoint_line:
-            kdd = 0.28
+        if self.current_section in [6]:
+            kdd = 0.29
             distance = kdd * current_speed
-            distance = np.clip(distance, 30, 70)
+            distance = np.clip(distance, 32, 70)
             location, _ = self.waypoint_line.get_lookahead_location(vehicle_location, distance)
             point = roar_py_interface.RoarPyWaypoint(location, roll_pitch_yaw=np.ndarray([0, 0, 0]), lane_width=0.0)
             return point

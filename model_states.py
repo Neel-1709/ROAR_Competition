@@ -13,14 +13,14 @@ from submission import filter_waypoints
 
 SECTION_NUMBER = 8
 SECTION_START_INDEX = 1744
-SECTION_END_INDEX = 2200
+SECTION_END_INDEX = 2359
 SPAWN_WAYPOINT_INDEX = SECTION_START_INDEX - 50
 
 TICK_REPEAT = 3
 TIME_TO_BEAT = 14.25
 NUM_EPISODES = 30
 
-MODEL_PATH = "models/section_8/sac_section_8_final"
+MODEL_PATH = "checkpoints/Final_Models/sac_section_8_410000_steps"
 
 CARLA_HOST = "127.0.0.1"
 CARLA_PORT = 2000
@@ -29,7 +29,7 @@ CARLA_TIMEOUT = 10.0
 CONTROL_STEP = 0.05
 PHYSICS_STEP = 0.005
 
-MAX_LATERAL_OFFSET_M = 0
+MAX_LATERAL_OFFSET_M = 0.25
 MAX_YAW_OFFSET_DEG = 1.0
 MIN_SPEED_SCALE = 0.97
 MAX_SPEED_SCALE = 1.03
@@ -204,7 +204,7 @@ def main():
             while not (terminated or truncated):
                 action, _ = model.predict(
                     obs,
-                    deterministic=False,
+                    deterministic=True,
                 )
 
                 obs, reward, terminated, truncated, info = env.step(action)

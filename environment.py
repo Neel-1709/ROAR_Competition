@@ -66,7 +66,7 @@ class CustomEnv(Env):
         self.collision_penalty = 150.0
         self.min_lookahead = 5.0
         self.max_lookahead = 40.0
-        self.max_offset_meters = 2.0
+        self.max_offset_meters = 1.8
 
         self.action_space = spaces.Box(
             low=np.array([-1.0, -1.0], dtype=np.float32),
@@ -437,7 +437,7 @@ class CustomEnv(Env):
                 completed = True
                 break
 
-        reward = 120 * total_progress - collision * self.collision_penalty - 0.05 * ticks_executed - 0.07 * float(np.sum((self.previous_action - action) ** 2))
+        reward = 120 * total_progress - collision * self.collision_penalty - 0.10 * ticks_executed - 0.07 * float(np.sum((self.previous_action - action) ** 2))
 
         self.previous_action = action.copy()
         self.previous_observation = self.get_observation()
@@ -456,8 +456,9 @@ class CustomEnv(Env):
             terminated = True
             reason = "Completed Section"
             reward += 250.0
-            if self.time_to_beat > 0 and section_time <= self.time_to_beat:
-                reward += 100.0
+
+            reward += 180.0 * max(0.0, 22.25 - section_time)
+
         elif self.episode_steps >= self.max_episode_steps:
             truncated = True
             reason = "Max episode steps reached"

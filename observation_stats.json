@@ -1786,5 +1786,23 @@
         "max_waypoint_x": 372.4390406413655,
         "max_waypoint_y": 235.7591828274842,
         "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
+    },
+    {
+        "max_yaw_rate": 62.83185307179586,
+        "max_heading_error": 3.1415066378576455,
+        "max_speed": 55.952287673950195,
+        "max_lateral_error": 2.5497412974914884,
+        "max_waypoint_x": 372.4390406413655,
+        "max_waypoint_y": 235.7591828274842,
+        "min_progress": 0.0
     }
 ]
