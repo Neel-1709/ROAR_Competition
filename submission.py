@@ -173,7 +173,7 @@ class RoarCompetitionSolution:
         self.section_start_tick = None
 
         self.TIMING_START_WP = 1744
-        self.TIMING_END_WP = 2200
+        self.TIMING_END_WP = 2359
 
     async def initialize(self) -> None:
         # NOTE waypoints are changed through this line
